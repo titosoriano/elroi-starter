@@ -1,0 +1,25 @@
+/*
+ * Brand tokens: the one file to change per client. Colors, fonts, radius and spacing scale.
+ * Check every text/background pair for WCAG AA contrast (4.5:1 body text, 3:1 large text).
+ * Fonts: self-host them in assets/fonts/ with @font-face here (no Google Fonts link).
+ */
+:root {
+	--es-ink: #10212b;          /* text and dark grounds */
+	--es-ink-soft: #4a5a66;     /* secondary text */
+	--es-accent: #1f7a6b;       /* buttons and highlights; white text on it must pass AA */
+	--es-accent-ink: #ffffff;   /* text on the accent */
+	--es-accent-soft: #e6f2ef;  /* tinted sections */
+	--es-line: #d9dee2;         /* borders */
+	--es-bg: #ffffff;
+	--es-bg-alt: #f5f7f8;
+	--es-highlight: #1f7a6b;    /* *highlighted* heading words on light grounds */
+	--es-highlight-dark: #7fd1c1; /* the same on dark grounds */
+
+	--es-font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+	--es-font-head: var(--es-font-body);
+
+	--es-radius: 6px;
+	--es-max: 76rem;
+	--es-gutter: clamp(1rem, 4vw, 2rem);
+	--es-space: clamp(3.5rem, 8vw, 6.5rem);
+}
