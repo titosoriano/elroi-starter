@@ -16,6 +16,7 @@ A lean, hand-coded WordPress theme made to work with [ElRoi Site Editor](https:/
 - **Optional cinematic motion:** GSAP, ScrollTrigger and Lenis smooth scroll, self-hosted and off until the theme turns them on, with simple attributes for word-by-word headings, parallax, shutter reveals and videos that play on screen.
 - **Accessible by default:** skip link, visible focus, keyboard dropdowns, a mobile menu that locks the page behind it, labelled form fields, reduced-motion support.
 - **One file to brand it:** colors, fonts and radius in `assets/css/tokens.css`.
+- **Built for Rank Math:** business details, service areas, FAQs and breadcrumbs go into Rank Math's structured data, clients can add inline links, and `tests/seo_scores.py` fails any page scoring under 80.
 
 ![Service page](docs/service.png)
 
@@ -30,7 +31,7 @@ A lean, hand-coded WordPress theme made to work with [ElRoi Site Editor](https:/
 
 ## Requirements
 
-WordPress 6.5+, PHP 8.1+, and the ElRoi Site Editor plugin.
+WordPress 6.5+, PHP 8.1+, and the ElRoi Site Editor plugin (1.1+ for the Rank Math features).
 
 ## License
 

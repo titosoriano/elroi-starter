@@ -101,3 +101,24 @@ function es_form_href() {
 	}
 	return $contact ? esc_url( get_permalink( $contact[0] ) . '#lead-form' ) : '#lead-form';
 }
+
+/**
+ * Text with `[words](/path)` links (ElRoi Site Editor 1.1+; plain escaped text before that).
+ *
+ * @param mixed $text Text.
+ */
+function es_rich( $text ) {
+	return function_exists( 'elroi_rich' ) ? elroi_rich( $text ) : ( function_exists( 'elroi_text' ) ? elroi_text( $text ) : esc_html( (string) $text ) );
+}
+
+/**
+ * Plain words for structured data: placeholders filled in, highlight marks and link syntax removed.
+ *
+ * @param mixed $text Text.
+ */
+function es_plain( $text ) {
+	if ( function_exists( 'elroi_plain' ) ) {
+		return elroi_plain( $text );
+	}
+	return wp_strip_all_tags( html_entity_decode( function_exists( 'elroi_text' ) ? elroi_text( $text ) : (string) $text ) );
+}

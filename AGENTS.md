@@ -32,7 +32,7 @@ Each client site starts as a copy of this repository ("Use this template" on Git
 - `inc/nav.php`: header menu with dropdowns and the mobile drawer, from the "Main menu" location.
 - `inc/lead-form.php`: the contact form (`es_lead_form( $title, $text )`). Saves a private "Form messages" post, emails `form_email` (or the admin email), and optionally sends the lead to HighLevel and checks Cloudflare Turnstile. Server-only settings go in `wp-config.php`, never in the repo: `ELROI_GHL_TOKEN`, `ELROI_GHL_LOCATION`, optional `ELROI_GHL_PIPELINE`, `ELROI_GHL_STAGE`, `ELROI_GHL_MESSAGE_FIELD`; `ELROI_TURNSTILE_SITE`, `ELROI_TURNSTILE_SECRET`. HighLevel tags: `website-lead`, `website-request` (removed and re-added on each message so a "Tag added" workflow fires every time) and `service-<slug>`.
 - `inc/motion.php`: the optional motion layer (off by default; see Motion).
-- `inc/seo.php`: JSON-LD: the business (type from Site Settings, same `@id` as Rank Math's Organization) on the home page, BreadcrumbList on inner pages, FAQPage where a page has FAQs. Titles, descriptions, Open Graph and sitemaps belong to Rank Math.
+- `inc/seo.php`: JSON-LD: the business (type, description, phone, email, address, service areas and social profiles from Site Settings), BreadcrumbList on inner pages, FAQPage where a page has FAQs. With Rank Math's Schema module on, all of it goes into Rank Math's single graph: the business completes Rank Math's Organization node (same `@id`), and our BreadcrumbList is only added when Rank Math's breadcrumbs are off. Without Rank Math the theme prints its own graph. Titles, descriptions, Open Graph and sitemaps belong to Rank Math.
 - `parts/`: `hero`, `sections`, `faq`, `cta`. `header.php`, `footer.php` (footer credit links to elroi.marketing).
 - Templates: `front-page.php`, `templates/service.php`, `templates/page.php`, `templates/contact.php`; `page.php` (plain block-editor pages), `index.php` (blog/archives), `single.php`, `404.php`.
 - `assets/css/tokens.css` (brand), `assets/css/site.css` (layout), `assets/js/site.js` (dropdowns, drawer, reveal, form notice focus), `assets/js/motion.js` + `assets/css/motion.css` (motion layer), `assets/vendor/` (GSAP, ScrollTrigger, Lenis: downloaded by `bin/vendor.sh` at pinned versions with checksums, not committed).
@@ -62,6 +62,24 @@ The libraries are not in the repository: run `bin/vendor.sh` after cloning to te
 
 Check every animated page with JavaScript off, with reduced motion on, at 1440px and 390px.
 
+## SEO (Rank Math)
+
+Needs ElRoi Site Editor 1.1+, which makes Rank Math score each designed page as visitors see it (live while editing), leaves the paid-only Content AI check out, adds field photos to the sitemap and makes site search read the fields. The theme's part:
+
+- Everything a visitor reads is inside `<main>`; one `<h1>`; headings never skip a level; decorative duplicates (split words, marquee copies) carry `aria-hidden="true"`.
+- Paragraph and FAQ answer fields use `'rich' => true` and print with `elroi_paragraphs( $list, '', true )` / `es_rich()`, so clients can add `[internal links](/page/)`. FAQ answers in the structured data use `es_plain()`.
+- Every field that labels a button or link has `'link_text' => true`; the form then warns about "Learn more"-style words.
+- Fill in Site Settings > Business, including **Towns and areas you serve** (Google's `areaServed`), and set Rank Math > Titles & Meta > Local SEO to "Organization" so the business details merge into Rank Math's own entry.
+- One focus keyword per page, never two pages on the same keyword: keep the map in the client repo (`seo/keyword-map.md`: keyword, page, pages linking to it, score). Put the keyword in the SEO title, the meta description, the H1 or first paragraph, one image's alt text, and link to the page from at least one other page.
+- Rank Math wants 600+ words per page: give designed pages a real text section (sections, FAQs) rather than padding.
+- Before handover and after content changes, run the score check: every page and post must score 80 or more.
+
+```bash
+pip install playwright && python3 -m playwright install chromium
+python3 tests/seo_scores.py --site http://127.0.0.1:9401 --playground            # local
+ES_WP_USER=... ES_WP_PASS=... python3 tests/seo_scores.py --site https://client.com  # live (never commit the password)
+```
+
 ## Verify
 
 Local, on WordPress Playground (Node 22; Playground fails on Node 26), with the plugin checked out next to this repo:
@@ -76,7 +94,7 @@ curl -s http://127.0.0.1:9401/es-tests/run.php    # every check must pass
 open http://127.0.0.1:9401/es-tests/login.php     # local admin
 ```
 
-`tests/run.php` checks that each designed page renders one `<h1>` without PHP errors, that saving each page's form unchanged leaves the HTML identical, that form messages are stored, and the schema. On the client's server, repeat the same idea: snapshot the pages' HTML before and after each deploy and compare. Check every page at 1440px and 390px.
+`tests/run.php` checks that each designed page renders one `<h1>` without PHP errors, keeps its h1 and words inside `<main>`, never skips a heading level, gives every image an alt attribute and has no "Learn more"-style links; that saving each page's form unchanged leaves the HTML identical; that a form message sent by a visitor is stored; and the schema (business with service areas, FAQPage with plain answers, breadcrumbs). On the client's server, repeat the same idea: snapshot the pages' HTML before and after each deploy and compare. Check every page at 1440px and 390px.
 
 ## Deploy
 

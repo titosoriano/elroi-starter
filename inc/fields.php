@@ -39,7 +39,7 @@ function es_sections_field() {
 		'fields' => array(
 			'heading'    => array( 'type' => 'heading', 'label' => 'Section heading' ),
 			'eyebrow'    => array( 'label' => 'Small label above the heading (optional)' ),
-			'paragraphs' => array( 'type' => 'paragraphs', 'label' => 'Text' ),
+			'paragraphs' => array( 'type' => 'paragraphs', 'label' => 'Text', 'rich' => true ),
 			'bullets'    => array( 'type' => 'lines', 'label' => 'Checklist', 'help' => 'Shown with check marks.' ),
 			'image'      => array( 'type' => 'image', 'label' => 'Image (optional)' ),
 			'cards'      => array(
@@ -69,7 +69,7 @@ function es_faq_field() {
 		'help'   => 'Start each answer with the direct answer: Google can show it in search results.',
 		'fields' => array(
 			'q' => array( 'label' => 'Question' ),
-			'a' => array( 'type' => 'textarea', 'label' => 'Answer', 'rows' => 4 ),
+			'a' => array( 'type' => 'textarea', 'label' => 'Answer', 'rows' => 4, 'rich' => true ),
 		),
 	);
 }
@@ -84,7 +84,7 @@ function es_cta_field() {
 		'fields' => array(
 			'heading' => array( 'type' => 'heading', 'label' => 'Heading', 'default' => 'Ready to start *your project?*' ),
 			'text'    => array( 'type' => 'textarea', 'label' => 'Text', 'default' => 'Tell us what you have in mind. We reply within {response_hours} hours.' ),
-			'button'  => array( 'label' => 'Button text', 'default' => 'Get a free estimate', 'half' => true ),
+			'button'  => array( 'label' => 'Button text', 'default' => 'Get a free estimate', 'half' => true, 'link_text' => true ),
 		),
 	);
 }
@@ -112,6 +112,7 @@ add_action(
 								'half'    => true,
 							),
 							'description'   => array( 'type' => 'textarea', 'label' => 'One-sentence description', 'default' => 'Licensed and insured local experts.', 'help' => 'Used by Google and in the footer.' ),
+							'service_areas' => array( 'type' => 'lines', 'label' => 'Towns and areas you serve', 'help' => 'One per line, e.g. Morristown, NJ. Google uses these to show the business for local searches, most of all when there is no storefront address.' ),
 						),
 					),
 					'contact'  => array(
@@ -169,7 +170,7 @@ add_action(
 							'h1'         => array( 'type' => 'heading', 'label' => 'Main heading (H1)', 'default' => 'Local experts who *get it done right.*' ),
 							'lede'       => array( 'type' => 'textarea', 'label' => 'Introduction', 'default' => '{years} years serving homeowners and businesses with honest pricing and clean work.' ),
 							'photo'      => array( 'type' => 'image', 'label' => 'Background photo' ),
-							'button'     => array( 'label' => 'Second button text', 'default' => 'Our services', 'half' => true ),
+							'button'     => array( 'label' => 'Second button text', 'default' => 'Our services', 'half' => true, 'link_text' => true ),
 							'button_url' => array( 'type' => 'link', 'label' => 'Second button link', 'default' => '#services', 'half' => true ),
 							'form_title' => array( 'label' => 'Form box title', 'default' => 'Get a free estimate', 'half' => true ),
 							'form_text'  => array( 'label' => 'Form box text', 'default' => 'We reply within {response_hours} hours.', 'half' => true ),
@@ -206,7 +207,7 @@ add_action(
 						'label'  => 'About',
 						'fields' => array(
 							'heading'    => array( 'type' => 'heading', 'label' => 'Heading', 'default' => 'Why neighbors *choose us.*' ),
-							'paragraphs' => array( 'type' => 'paragraphs', 'label' => 'Text', 'default' => array( 'Tell the story of the business here: who runs it, how long it has served the area, and what customers can count on.' ) ),
+							'paragraphs' => array( 'type' => 'paragraphs', 'label' => 'Text', 'rich' => true, 'default' => array( 'Tell the story of the business here: who runs it, how long it has served the area, and what customers can count on.' ) ),
 							'photo'      => array( 'type' => 'image', 'label' => 'Photo' ),
 							'facts'      => array(
 								'type'    => 'repeater',

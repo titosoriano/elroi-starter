@@ -18,7 +18,7 @@ if ( ! $faqs ) {
 			<?php foreach ( $faqs as $f ) : ?>
 				<details class="es-faq__item">
 					<summary><?php echo elroi_text( $f['q'] ); // phpcs:ignore ?><?php echo es_icon( 'chevron', 20 ); // phpcs:ignore ?></summary>
-					<p><?php echo elroi_text( $f['a'] ); // phpcs:ignore ?></p>
+					<p><?php echo es_rich( $f['a'] ); // phpcs:ignore ?></p>
 				</details>
 			<?php endforeach; ?>
 		</div>

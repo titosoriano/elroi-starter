@@ -40,7 +40,7 @@ if ( ! wp_get_nav_menu_object( 'Main' ) ) {
 }
 
 // Sample service content.
-if ( ! get_post_meta( $one, '_elroi_content', true ) ) {
+if ( ! str_contains( (string) get_post_meta( $one, '_elroi_content', true ), 'our process' ) ) {
 	update_post_meta(
 		$one,
 		'_elroi_content',
@@ -52,7 +52,7 @@ if ( ! get_post_meta( $one, '_elroi_content', true ) ) {
 						array( 'heading' => 'What is included', 'paragraphs' => array( 'Describe the scope in plain words.' ), 'bullets' => array( 'Free estimate', 'Written scope', 'Licensed crews' ) ),
 						array( 'heading' => 'How it works', 'cards' => array( array( 'heading' => 'Visit', 'text' => 'We see the space.' ), array( 'heading' => 'Plan', 'text' => 'You get a written scope.' ), array( 'heading' => 'Build', 'text' => 'One team does the work.' ) ) ),
 					),
-					'faqs'     => array( array( 'q' => 'How long does it take?', 'a' => 'Most projects take two to four weeks.' ) ),
+					'faqs'     => array( array( 'q' => 'How long does it take?', 'a' => 'Most projects take two to four weeks. See [our process](/services/).' ) ),
 				)
 			)
 		)
@@ -60,4 +60,8 @@ if ( ! get_post_meta( $one, '_elroi_content', true ) ) {
 }
 if ( ! get_page_by_path( 'welcome', OBJECT, 'post' ) ) {
 	wp_insert_post( array( 'post_status' => 'publish', 'post_title' => 'Welcome to the journal', 'post_name' => 'welcome', 'post_excerpt' => 'A sample post.', 'post_content' => '<!-- wp:paragraph --><p>Write posts in the block editor.</p><!-- /wp:paragraph -->' ) );
+}
+$es_settings = (array) get_option( 'elroi_settings', array() );
+if ( empty( $es_settings['service_areas'] ) ) {
+	update_option( 'elroi_settings', array_merge( $es_settings, array( 'service_areas' => array( 'Morristown, NJ' ) ) ) );
 }
