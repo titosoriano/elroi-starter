@@ -13,6 +13,7 @@ A lean, hand-coded WordPress theme made to work with [ElRoi Site Editor](https:/
 - **Site Settings:** business name and type, phone, email, address, opening hours, numbers shown on the site, the services in the contact form, and social profiles.
 - **Lead form:** saved in WordPress, emailed, and optionally sent to HighLevel (contact, tags, note and opportunity) with a Cloudflare Turnstile spam check. Keys live in `wp-config.php`, never in the code.
 - **Local SEO:** business, breadcrumb and FAQ structured data, ready to sit next to Rank Math.
+- **Optional cinematic motion:** GSAP, ScrollTrigger and Lenis smooth scroll, self-hosted and off until the theme turns them on, with simple attributes for word-by-word headings, parallax, shutter reveals and videos that play on screen.
 - **Accessible by default:** skip link, visible focus, keyboard dropdowns, a mobile menu that locks the page behind it, labelled form fields, reduced-motion support.
 - **One file to brand it:** colors, fonts and radius in `assets/css/tokens.css`.
 
