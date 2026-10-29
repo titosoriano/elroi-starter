@@ -1,0 +1,16 @@
+/* Motion layer (loaded only with add_theme_support( 'es-motion' )). Nothing here hides content:
+   every hidden start state is set by assets/js/motion.js, so the page is complete without it. */
+
+/* Lenis owns smooth scrolling while it runs. */
+html.lenis { scroll-behavior: auto; }
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-stopped { overflow: clip; }
+.lenis [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-smooth iframe { pointer-events: none; }
+
+/* Split headings: each word rises inside its own mask. */
+.es-w { display: inline-block; overflow: hidden; vertical-align: top; padding-block: .08em; margin-block: -.08em; }
+.es-w__in { display: inline-block; }
+
+/* Parallax media moves inside a frame that clips it. */
+[data-es-parallax] { will-change: transform; }
