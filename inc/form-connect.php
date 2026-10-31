@@ -137,7 +137,7 @@ function es_form_connect_page() {
 	<div class="wrap">
 		<h1><?php esc_html_e( 'Connect a form', 'elroi-starter' ); ?></h1>
 		<p style="max-width:46rem">Every page that shows the contact form uses what you choose here. The built-in form keeps every message under <strong>Form messages</strong>, so nothing is lost while the site is being finished.</p>
-		<p><strong>Right now messages go to:</strong> <?php echo esc_html( $dest ? 'Form messages in wp-admin, and ' . implode( ', ', $dest ) : 'Form messages in wp-admin only' ); ?>.</p>
+		<p><strong>Right now messages go to:</strong> <?php echo esc_html( $dest ? 'Form messages in wp-admin, and ' . implode( ', ', $dest ) : 'Form messages in wp-admin, plus the server\'s basic email (not reliable)' ); ?>.</p>
 		<form method="post" action="options.php">
 			<?php settings_fields( 'es_form' ); ?>
 			<fieldset style="margin:1.5rem 0">
@@ -171,13 +171,13 @@ function es_form_health_test() {
 	$dest = es_form_destinations();
 	$link = admin_url( 'edit.php?post_type=es_lead&page=es-form-connect' );
 	$base = array(
-		'label'       => $dest ? 'The contact form is connected' : 'The contact form only saves messages in wp-admin',
+		'label'       => $dest ? 'The contact form is connected' : 'The contact form is not connected to a CRM or mail service yet',
 		'status'      => $dest ? 'good' : 'recommended',
 		'badge'       => array(
 			'label' => 'Contact form',
 			'color' => 'blue',
 		),
-		'description' => '<p>' . esc_html( $dest ? 'Messages go to ' . implode( ', ', $dest ) . '.' : 'Every message is kept under Form messages, but no one is told about it. Paste your CRM form, connect HighLevel, or set up an SMTP plugin (for example FluentSMTP) so the emails arrive.' ) . '</p>',
+		'description' => '<p>' . esc_html( $dest ? 'Messages go to ' . implode( ', ', $dest ) . '.' : 'Every message is kept under Form messages and emailed with the server\'s basic mail, which often lands in spam or never arrives. Paste your CRM form, connect HighLevel, or set up an SMTP plugin (for example FluentSMTP) so the emails arrive.' ) . '</p>',
 		'actions'     => '<p><a href="' . esc_url( $link ) . '">Connect a form</a></p>',
 		'test'        => 'es_form_delivery',
 	);
