@@ -155,6 +155,16 @@ ob_start();
 es_form_connect_page();
 $screen = ob_get_clean();
 $check( 'the Connect a form screen offers both choices and the code box', str_contains( $screen, 'value="builtin"' ) && str_contains( $screen, 'value="embed"' ) && str_contains( $screen, 'name="es_form[embed]"' ) && str_contains( $screen, 'kept' ) );
+if ( ! defined( 'FLUENTMAIL' ) ) {
+	define( 'FLUENTMAIL', 'test' );
+}
+$fluent = get_option( 'fluentmail-settings' );
+update_option( 'fluentmail-settings', array( 'connections' => array() ) );
+$fluent_empty = es_mail_plugin_active();
+update_option( 'fluentmail-settings', array( 'connections' => array( 'abc' => array( 'title' => 'Hostinger' ) ) ) );
+$fluent_set = es_mail_plugin_active();
+false === $fluent ? delete_option( 'fluentmail-settings' ) : update_option( 'fluentmail-settings', $fluent );
+$check( 'FluentSMTP counts as connected only once it has a mail connection set up', ! $fluent_empty && $fluent_set );
 delete_option( 'es_form' );
 $san = es_form_sanitize( array( 'mode' => 'embed', 'embed' => '<script>x()</script><iframe src="https://crm.example/f"></iframe>' ) );
 wp_set_current_user( 0 );

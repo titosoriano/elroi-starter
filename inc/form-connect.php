@@ -41,11 +41,22 @@ function es_form_embed_html() {
 }
 
 /**
- * Whether an SMTP or transactional mail plugin is active.
+ * Whether a mail plugin is set up to send the built-in form's emails. FluentSMTP and WP Mail
+ * SMTP count only once a connection is configured (installed alone, mail still goes out through
+ * the server and often lands in spam or nowhere). Filter: `es_mail_plugin_active`.
  */
 function es_mail_plugin_active() {
-	$known = defined( 'FLUENTMAIL' ) || defined( 'WPMS_PLUGIN_VER' ) || defined( 'POST_SMTP_VER' ) || class_exists( 'EasyWPSMTP' ) || defined( 'SENDGRID_CATEGORY' ) || defined( 'MAILGUN_VERSION' ) || defined( 'BREVO_PLUGIN_VERSION' );
-	return (bool) apply_filters( 'es_mail_plugin_active', $known );
+	$ok = false;
+	if ( defined( 'FLUENTMAIL' ) ) {
+		$s  = (array) get_option( 'fluentmail-settings', array() );
+		$ok = ! empty( $s['connections'] );
+	} elseif ( defined( 'WPMS_PLUGIN_VER' ) ) {
+		$s  = (array) get_option( 'wp_mail_smtp', array() );
+		$ok = ! empty( $s['mail']['mailer'] ) && 'mail' !== $s['mail']['mailer'];
+	} else {
+		$ok = defined( 'POST_SMTP_VER' ) || class_exists( 'EasyWPSMTP' ) || defined( 'SENDGRID_CATEGORY' ) || defined( 'MAILGUN_VERSION' ) || defined( 'BREVO_PLUGIN_VERSION' );
+	}
+	return (bool) apply_filters( 'es_mail_plugin_active', $ok );
 }
 
 /**
@@ -166,7 +177,7 @@ function es_form_health_test() {
 			'label' => 'Contact form',
 			'color' => 'blue',
 		),
-		'description' => '<p>' . esc_html( $dest ? 'Messages go to ' . implode( ', ', $dest ) . '.' : 'Every message is kept under Form messages, but no one is told about it. Paste your CRM form, connect HighLevel, or add an SMTP plugin so the emails arrive.' ) . '</p>',
+		'description' => '<p>' . esc_html( $dest ? 'Messages go to ' . implode( ', ', $dest ) . '.' : 'Every message is kept under Form messages, but no one is told about it. Paste your CRM form, connect HighLevel, or set up an SMTP plugin (for example FluentSMTP) so the emails arrive.' ) . '</p>',
 		'actions'     => '<p><a href="' . esc_url( $link ) . '">Connect a form</a></p>',
 		'test'        => 'es_form_delivery',
 	);
