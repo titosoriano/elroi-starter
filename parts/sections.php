@@ -28,7 +28,7 @@ foreach ( (array) ( $args['sections'] ?? array() ) as $i => $s ) :
 				<?php endif; ?>
 			</div>
 			<?php if ( $has_image ) : ?>
-				<figure class="es-section__media" data-es-reveal><?php echo elroi_image( $s['image'], 'large', array( 'loading' => 'lazy', 'sizes' => '(min-width: 900px) 45vw, 100vw' ) ); // phpcs:ignore ?></figure>
+				<figure class="es-section__media" data-es-reveal><?php echo elroi_image( $s['image'], 'large', array( 'loading' => 'lazy', 'sizes' => es_sizes( 'half' ) ) ); // phpcs:ignore ?></figure>
 			<?php endif; ?>
 		</div>
 		<?php if ( ! empty( $s['cards'] ) ) : ?>
@@ -36,7 +36,7 @@ foreach ( (array) ( $args['sections'] ?? array() ) as $i => $s ) :
 				<?php foreach ( $s['cards'] as $c ) : ?>
 					<li class="es-card" data-es-reveal>
 						<?php if ( ! empty( $c['image'] ) ) : ?>
-							<?php echo elroi_image( $c['image'], 'medium_large', array( 'class' => 'es-card__img', 'loading' => 'lazy' ) ); // phpcs:ignore ?>
+							<?php echo elroi_image( $c['image'], 'medium_large', array( 'class' => 'es-card__img', 'loading' => 'lazy', 'sizes' => es_sizes( 'card' ) ) ); // phpcs:ignore ?>
 						<?php endif; ?>
 						<h3 class="es-card__title">
 							<?php if ( ! empty( $c['link'] ) ) : ?><a href="<?php echo elroi_link( $c['link'] ); // phpcs:ignore ?>"><?php echo elroi_text( $c['heading'] ); // phpcs:ignore ?></a><?php else : ?><?php echo elroi_text( $c['heading'] ); // phpcs:ignore ?><?php endif; ?>

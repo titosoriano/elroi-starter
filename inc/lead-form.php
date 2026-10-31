@@ -238,6 +238,21 @@ function es_lead_form( $title = '', $text = '' ) {
 		'robot'   => array( 'err', 'We could not confirm you are not a robot. Please try again.' ),
 		'error'   => array( 'err', 'Something went wrong. Please call us instead.' ),
 	);
+	$embed = es_form_embed_html();
+	if ( '' !== $embed ) {
+		?>
+		<div class="es-form es-form--embed" id="lead-form">
+			<?php if ( $title ) : ?>
+				<h2 class="es-form__title"><?php echo elroi_text( $title ); // phpcs:ignore ?></h2>
+			<?php endif; ?>
+			<?php if ( $text ) : ?>
+				<p class="es-form__text"><?php echo elroi_text( $text ); // phpcs:ignore ?></p>
+			<?php endif; ?>
+			<div class="es-form__embed"><?php echo $embed; // phpcs:ignore -- saved by someone allowed to post raw HTML. ?></div>
+		</div>
+		<?php
+		return;
+	}
 	if ( es_turnstile_on() ) {
 		wp_enqueue_script( 'cf-turnstile', 'https://challenges.cloudflare.com/turnstile/v0/api.js', array(), null, array( 'strategy' => 'defer' ) ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
 	}

@@ -1,4 +1,4 @@
-/* ElRoi Starter: dropdowns, mobile menu, reveal on scroll, form notice focus. No dependencies. */
+/* ElRoi Starter: dropdowns, mobile menu, reveal on scroll, video players, form notice focus. No dependencies. */
 (function () {
 	'use strict';
 	document.documentElement.classList.add('es-js');
@@ -70,6 +70,22 @@
 			if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add('is-in');
 		});
 	}, 1200);
+
+	// Videos: the cover becomes the YouTube/Vimeo player only when pressed.
+	document.querySelectorAll('[data-es-video]').forEach(function (a) {
+		a.addEventListener('click', function (e) {
+			e.preventDefault();
+			var f = document.createElement('iframe');
+			var src = a.getAttribute('data-es-video');
+			f.src = src + (src.indexOf('?') < 0 ? '?' : '&') + 'autoplay=1';
+			f.title = a.getAttribute('data-es-video-title') || 'Video';
+			f.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media';
+			f.allowFullscreen = true;
+			f.className = 'es-video__frame';
+			a.replaceWith(f);
+			f.focus();
+		});
+	});
 
 	// After sending the form, move focus to its message so screen readers announce it.
 	var notice = document.querySelector('[data-es-notice]');

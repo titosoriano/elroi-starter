@@ -19,7 +19,7 @@ the_post();
 			</div>
 		</header>
 		<?php if ( has_post_thumbnail() ) : ?>
-			<figure class="es-container es-post__media"><?php the_post_thumbnail( 'large', array( 'loading' => 'eager' ) ); ?></figure>
+			<figure class="es-container es-post__media"><?php the_post_thumbnail( 'large', array( 'loading' => 'eager', 'fetchpriority' => 'high', 'sizes' => es_sizes( 'wide' ) ) ); ?></figure>
 		<?php endif; ?>
 		<div class="es-container es-prose"><?php the_content(); ?></div>
 	</article>

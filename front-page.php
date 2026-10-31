@@ -14,7 +14,7 @@ get_header();
 
 	<section class="es-hero es-hero--home<?php echo $h['photo'] ? ' es-hero--photo' : ''; ?>" aria-labelledby="es-hero-title">
 		<?php if ( $h['photo'] ) : ?>
-			<div class="es-hero__media"><?php echo elroi_image( $h['photo'], 'full', array( 'alt' => '', 'loading' => 'eager', 'fetchpriority' => 'high', 'sizes' => '100vw' ) ); // phpcs:ignore ?></div>
+			<div class="es-hero__media"><?php echo elroi_image( $h['photo'], 'full', array( 'alt' => '', 'loading' => 'eager', 'fetchpriority' => 'high', 'sizes' => es_sizes( 'full' ) ) ); // phpcs:ignore ?></div>
 		<?php endif; ?>
 		<div class="es-container es-hero__grid">
 			<div class="es-hero__inner">
@@ -52,7 +52,7 @@ get_header();
 				<?php foreach ( $c['services']['items'] as $s ) : ?>
 					<li class="es-card" data-es-reveal>
 						<?php if ( $s['image'] ) : ?>
-							<?php echo elroi_image( $s['image'], 'medium_large', array( 'class' => 'es-card__img', 'loading' => 'lazy' ) ); // phpcs:ignore ?>
+							<?php echo elroi_image( $s['image'], 'medium_large', array( 'class' => 'es-card__img', 'loading' => 'lazy', 'sizes' => es_sizes( 'card' ) ) ); // phpcs:ignore ?>
 						<?php endif; ?>
 						<h3 class="es-card__title"><?php if ( $s['link'] ) : ?><a href="<?php echo elroi_link( $s['link'] ); // phpcs:ignore ?>"><?php echo elroi_text( $s['name'] ); // phpcs:ignore ?></a><?php else : ?><?php echo elroi_text( $s['name'] ); // phpcs:ignore ?><?php endif; ?></h3>
 						<p><?php echo elroi_text( $s['text'] ); // phpcs:ignore ?></p>

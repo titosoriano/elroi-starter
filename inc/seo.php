@@ -1,7 +1,7 @@
 <?php
 /**
  * Structured data (JSON-LD) from Site Settings and page content: the business, breadcrumbs on
- * inner pages, and FAQPage wherever a page has questions. Titles, descriptions, Open Graph and
+ * inner pages, FAQPage wherever a page has questions, and VideoObject for every video field (inc/video.php). Titles, descriptions, Open Graph and
  * the sitemap are left to Rank Math.
  *
  * With Rank Math's Schema module on, everything goes into Rank Math's single graph: the business
@@ -140,6 +140,9 @@ add_filter(
 		if ( $faq ) {
 			$data['es_faq'] = $faq;
 		}
+		foreach ( es_videos_schema() as $i => $video ) {
+			$data[ 'es_video_' . $i ] = $video;
+		}
 		if ( ! isset( $data['BreadcrumbList'] ) && ! ( class_exists( '\RankMath\Helper' ) && \RankMath\Helper::is_breadcrumbs_enabled() ) ) {
 			$crumbs = es_breadcrumb_schema();
 			if ( $crumbs ) {
@@ -157,7 +160,7 @@ add_action(
 		if ( ! function_exists( 'elroi_content' ) || es_rank_math_schema() ) {
 			return;
 		}
-		$graph = array_values( array_filter( array( is_front_page() ? es_business_schema() : null, es_breadcrumb_schema(), es_faq_schema() ) ) );
+		$graph = array_values( array_filter( array_merge( array( is_front_page() ? es_business_schema() : null, es_breadcrumb_schema(), es_faq_schema() ), es_videos_schema() ) ) );
 		if ( $graph ) {
 			printf( "<script type=\"application/ld+json\">%s</script>\n", wp_json_encode( array( '@context' => 'https://schema.org', '@graph' => $graph ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) );
 		}

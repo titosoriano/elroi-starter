@@ -9,6 +9,7 @@
 require dirname( __DIR__ ) . '/wp-load.php';
 require_once ABSPATH . 'wp-admin/includes/post.php';
 require_once ABSPATH . 'wp-admin/includes/template.php';
+require_once ABSPATH . 'wp-admin/includes/plugin.php';
 wp_set_current_user( 1 );
 header( 'Content-Type: application/json' );
 $results = array();
@@ -132,6 +133,71 @@ $check( 'service page outputs FAQPage and breadcrumbs', str_contains( $svc, '"FA
 $check( 'FAQ answers show inline links on the page', str_contains( $svc, '>our process</a>' ) );
 $check( 'FAQ answers are plain words in the structured data', str_contains( $svc, '"text":"Most projects take two to four weeks. See our process."' ), substr( $svc, strpos( $svc, 'FAQPage' ) ?: 0, 400 ) );
 $check( 'service areas go into the business schema', str_contains( $home, '"areaServed":[{"@type":"Place","name":"Morristown, NJ"}' ) );
+
+// A CRM form replaces the built-in fields inside the same designed box, and switching back restores them.
+$contact_url = get_permalink( get_page_by_path( 'contact' ) );
+update_option( 'es_form', array( 'mode' => 'embed', 'embed' => '<div class="crm-test">CRM FORM [es_test_code]</div>' ) );
+add_shortcode( 'es_test_code', fn() => 'shortcode-ran' );
+$crm = es_form_embed_html();
+$check( 'a pasted CRM form (and its shortcodes) is what the form shows', str_contains( $crm, 'crm-test' ) && str_contains( $crm, 'shortcode-ran' ), $crm );
+ob_start();
+es_lead_form( 'Title here', 'Text here' );
+$box = ob_get_clean();
+$check( 'the CRM form keeps the box, title, text and #lead-form anchor, without the built-in fields', str_contains( $box, 'id="lead-form"' ) && str_contains( $box, 'Title here' ) && str_contains( $box, 'crm-test' ) && ! str_contains( $box, 'name="es_name"' ), $box );
+$check( 'Site Health says the form is connected when it uses a CRM form', 'good' === es_form_health_test()['status'] );
+update_option( 'es_form', array( 'mode' => 'builtin', 'embed' => '<div class="crm-test">kept</div>' ) );
+ob_start();
+es_lead_form();
+$box = ob_get_clean();
+$check( 'switching back shows the built-in form and keeps the pasted code', str_contains( $box, 'name="es_name"' ) && str_contains( es_form_connection()['embed'], 'kept' ) );
+$check( 'Site Health recommends connecting the form when messages only stay in wp-admin', 'recommended' === es_form_health_test()['status'] || es_mail_plugin_active() );
+ob_start();
+es_form_connect_page();
+$screen = ob_get_clean();
+$check( 'the Connect a form screen offers both choices and the code box', str_contains( $screen, 'value="builtin"' ) && str_contains( $screen, 'value="embed"' ) && str_contains( $screen, 'name="es_form[embed]"' ) && str_contains( $screen, 'kept' ) );
+delete_option( 'es_form' );
+$san = es_form_sanitize( array( 'mode' => 'embed', 'embed' => '<script>x()</script><iframe src="https://crm.example/f"></iframe>' ) );
+wp_set_current_user( 0 );
+$san_anon = es_form_sanitize( array( 'mode' => 'embed', 'embed' => '<script>x()</script><iframe src="https://crm.example/f"></iframe>' ) );
+wp_set_current_user( 1 );
+$check( 'embed code keeps scripts only for people allowed to post raw HTML', ( ! current_user_can( 'unfiltered_html' ) || str_contains( $san['embed'], '<script>' ) ) && ! str_contains( $san_anon['embed'], '<script>' ) && str_contains( $san_anon['embed'], '<iframe' ), array( $san, $san_anon ) );
+
+// Video links: YouTube, Vimeo and files are recognized; anything else is not a video.
+$yt = es_video_source( 'https://youtu.be/dQw4w9WgXcQ?t=3' );
+$check( 'YouTube links become a privacy-friendly player and a cover', $yt && 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ' === $yt['embed'] && str_contains( $yt['thumb'], 'dQw4w9WgXcQ' ) );
+$check( 'Vimeo and MP4 links are recognized, other links are not', 'vimeo' === ( es_video_source( 'https://vimeo.com/76979871' )['provider'] ?? '' ) && 'video/mp4' === ( es_video_source( 'https://x.test/a/clip.mp4' )['type'] ?? '' ) && null === es_video_source( 'https://example.com/page' ) );
+
+// A video on a service page shows a player and becomes a VideoObject.
+$one_id  = get_page_by_path( 'services/service-one' )->ID;
+$one_raw = get_post_meta( $one_id, '_elroi_content', true );
+$one_c   = json_decode( $one_raw, true );
+$one_c['video'] = array( 'title' => 'How a project runs', 'video_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'description' => 'A two-minute walk through a project.', 'date' => '2026-01-10' );
+update_post_meta( $one_id, '_elroi_content', wp_slash( wp_json_encode( $one_c ) ) );
+$vid = $render( home_url( '/services/service-one/' ) );
+$check( 'a video field shows a cover that plays the video', str_contains( $vid, 'data-es-video="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"' ) && str_contains( $vid, 'Play video: How a project runs' ) );
+$check( 'a video field becomes VideoObject structured data with name, cover, date and player', str_contains( $vid, '"@type":"VideoObject"' ) && str_contains( $vid, '"name":"How a project runs"' ) && str_contains( $vid, '"thumbnailUrl":["https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"]' ) && str_contains( $vid, '"uploadDate":"2026-01-10T12:00:00' ) && str_contains( $vid, '"embedUrl":"https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"' ), substr( $vid, strpos( $vid, 'VideoObject' ) ?: 0, 500 ) );
+$seo_vid = es_test_seo( $vid );
+$check( 'the video page still passes the heading, alt and link checks', ! $seo_vid['skips'] && ! $seo_vid['no_alt'] && ! $seo_vid['vague'], $seo_vid );
+$one_c['video'] = array( 'title' => 'No cover', 'video_url' => 'https://vimeo.com/76979871' );
+$check( 'a Vimeo video without a cover photo gets no structured data (Google needs one)', null === es_video_schema( $one_c['video'], get_post( $one_id ) ) );
+update_post_meta( $one_id, '_elroi_content', wp_slash( $one_raw ) );
+
+// Posts get an "On this page" list once they have two H2s; one that already has a TOC block does not.
+$toc_post = wp_insert_post( array( 'post_status' => 'publish', 'post_title' => 'TOC test', 'post_name' => 'toc-test', 'post_content' => '<h2>First part</h2><p>a</p><h3>A detail</h3><p>b</p><h2>First part</h2><p>c</p>' ) );
+$toc_html = $render( get_permalink( $toc_post ) );
+$check( 'posts with two or more H2s get an "On this page" list that links to each heading', str_contains( $toc_html, 'class="es-toc"' ) && str_contains( $toc_html, '<h2 id="first-part">' ) && str_contains( $toc_html, '<h2 id="first-part-2">' ) && str_contains( $toc_html, 'href="#a-detail"' ) && str_contains( $toc_html, 'href="#first-part-2"' ), substr( $toc_html, strpos( $toc_html, 'es-toc' ) ?: 0, 600 ) );
+$check( 'the list is valid nesting (every list closes)', substr_count( $toc_html, '<ol>' ) === substr_count( $toc_html, '</ol>' ) );
+wp_update_post( array( 'ID' => $toc_post, 'post_content' => '<div class="wp-block-rank-math-toc-block"><nav>x</nav></div><h2>One</h2><h2>Two</h2>' ) );
+$check( 'a post that already has a table of contents block gets no second one', ! str_contains( $render( get_permalink( $toc_post ) ), 'class="es-toc"' ) );
+wp_update_post( array( 'ID' => $toc_post, 'post_content' => '<h2>Only one</h2><p>Short post.</p>' ) );
+$check( 'a short post with one H2 gets no list', ! str_contains( $render( get_permalink( $toc_post ) ), 'class="es-toc"' ) );
+wp_delete_post( $toc_post, true );
+$check( 'Rank Math is told the site has a table of contents', isset( apply_filters( 'rank_math/researches/toc_plugins', array() )['elroi-site-editor/elroi-site-editor.php'] ) );
+
+// Photos: new uploads get WebP copies when the server can write WebP; layouts ask for the right size.
+$fmt = apply_filters( 'image_editor_output_format', array(), 'x.jpg', 'image/jpeg' );
+$check( 'new JPEG uploads get WebP copies when the server supports it', wp_image_editor_supports( array( 'mime_type' => 'image/webp' ) ) ? 'image/webp' === ( $fmt['image/jpeg'] ?? '' ) : empty( $fmt['image/jpeg'] ) );
+$check( 'half-width photos ask phones for a full-width copy and desktops for under half', '(min-width: 900px) 45vw, 100vw' === es_sizes( 'half' ) );
 
 $failed = array_values( array_filter( $results, fn( $r ) => ! $r['ok'] ) );
 echo wp_json_encode( array( 'passed' => count( $results ) - count( $failed ), 'failed' => count( $failed ), 'fails' => $failed ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );

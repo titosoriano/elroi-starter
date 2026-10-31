@@ -12,7 +12,7 @@ $crumbs = es_breadcrumbs();
 ?>
 <header class="es-hero es-hero--inner<?php echo ! empty( $h['photo'] ) ? ' es-hero--photo' : ''; ?>">
 	<?php if ( ! empty( $h['photo'] ) ) : ?>
-		<div class="es-hero__media"><?php echo elroi_image( $h['photo'], 'full', array( 'alt' => '', 'loading' => 'eager', 'fetchpriority' => 'high', 'sizes' => '100vw' ) ); // phpcs:ignore ?></div>
+		<div class="es-hero__media"><?php echo elroi_image( $h['photo'], 'full', array( 'alt' => '', 'loading' => 'eager', 'fetchpriority' => 'high', 'sizes' => es_sizes( 'full' ) ) ); // phpcs:ignore ?></div>
 	<?php endif; ?>
 	<div class="es-container es-hero__inner">
 		<?php if ( count( $crumbs ) > 1 ) : ?>

@@ -262,6 +262,7 @@ add_action(
 				'fields' => array(
 					'hero'     => es_hero_fields(),
 					'sections' => es_sections_field(),
+					'video'    => es_video_field(),
 					'faqs'     => es_faq_field(),
 					'cta'      => es_cta_field(),
 				),

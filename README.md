@@ -17,6 +17,10 @@ A lean, hand-coded WordPress theme made to work with [ElRoi Site Editor](https:/
 - **Accessible by default:** skip link, visible focus, keyboard dropdowns, a mobile menu that locks the page behind it, labelled form fields, reduced-motion support.
 - **One file to brand it:** colors, fonts and radius in `assets/css/tokens.css`.
 - **Built for Rank Math:** business details, service areas, FAQs and breadcrumbs go into Rank Math's structured data, clients can add inline links, and `tests/seo_scores.py` fails any page scoring under 80.
+- **Forms designed first, connected last:** the built-in form keeps every message in wp-admin; paste a CRM form (HighLevel, HubSpot, Jotform...) under Form messages > Connect a form and it appears in the same designed box on every page. Site Health reminds you while it is not connected.
+- **Videos Google can find:** a video field with a fast cover-and-play player and VideoObject structured data.
+- **Readable posts:** an automatic "On this page" list on longer blog posts.
+- **Lighter photos:** WebP copies for new uploads and the right photo size for each screen.
 
 ![Service page](docs/service.png)
 

@@ -19,7 +19,7 @@ get_header();
 			<ul class="es-cards">
 				<?php while ( have_posts() ) : the_post(); ?>
 					<li class="es-card">
-						<?php if ( has_post_thumbnail() ) : ?><?php the_post_thumbnail( 'medium_large', array( 'class' => 'es-card__img', 'loading' => 'lazy' ) ); ?><?php endif; ?>
+						<?php if ( has_post_thumbnail() ) : ?><?php the_post_thumbnail( 'medium_large', array( 'class' => 'es-card__img', 'loading' => 'lazy', 'sizes' => es_sizes( 'card' ) ) ); ?><?php endif; ?>
 						<p class="es-eyebrow"><time datetime="<?php echo esc_attr( get_the_date( 'c' ) ); ?>"><?php echo esc_html( get_the_date() ); ?></time></p>
 						<h2 class="es-card__title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h2>
 						<p><?php echo esc_html( get_the_excerpt() ); ?></p>
