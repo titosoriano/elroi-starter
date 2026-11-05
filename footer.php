@@ -34,6 +34,17 @@ $es_address = trim( implode( ', ', array_filter( array( es_setting( 'street' ), 
 					<li><a href="<?php echo esc_url( 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode( $es_address ) ); ?>" rel="noopener" target="_blank"><?php echo es_icon( 'pin', 16 ); // phpcs:ignore ?> <?php echo esc_html( $es_address ); ?><span class="es-sr"> <?php esc_html_e( '(opens Google Maps in a new tab)', 'elroi-starter' ); ?></span></a></li>
 				<?php endif; ?>
 			</ul>
+			<?php foreach ( es_offices() as $es_office ) : ?>
+				<p class="es-footer__label es-footer__label--office"><?php echo esc_html( $es_office['name'] ? $es_office['name'] : __( 'Office', 'elroi-starter' ) ); ?></p>
+				<ul class="es-footer__list">
+					<?php if ( $es_office['phone'] ) : ?>
+						<li><a href="tel:<?php echo esc_attr( es_tel( $es_office['phone'] ) ); ?>"><?php echo es_icon( 'phone', 16 ); // phpcs:ignore ?> <?php echo esc_html( $es_office['phone'] ); ?></a></li>
+					<?php endif; ?>
+					<?php if ( $es_office['address'] ) : ?>
+						<li><a href="<?php echo esc_url( 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode( $es_office['address'] ) ); ?>" rel="noopener" target="_blank"><?php echo es_icon( 'pin', 16 ); // phpcs:ignore ?> <?php echo esc_html( $es_office['address'] ); ?><span class="es-sr"> <?php esc_html_e( '(opens Google Maps in a new tab)', 'elroi-starter' ); ?></span></a></li>
+					<?php endif; ?>
+				</ul>
+			<?php endforeach; ?>
 			<?php if ( es_setting( 'hours' ) ) : ?>
 				<ul class="es-footer__hours">
 					<?php foreach ( (array) es_setting( 'hours' ) as $es_h ) : ?>

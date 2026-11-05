@@ -17,6 +17,7 @@ get_header();
 			<div class="es-container"><?php get_template_part( 'parts/video', null, array( 'video' => $c['video'] ) ); ?></div>
 		</section>
 	<?php endif; ?>
+	<?php get_template_part( 'parts/embed', null, array( 'embed' => $c['embed'] ?? array() ) ); ?>
 	<section class="es-formband" aria-label="<?php esc_attr_e( 'Request an estimate', 'elroi-starter' ); ?>">
 		<div class="es-container es-formband__inner"><?php es_lead_form( __( 'Get a free estimate', 'elroi-starter' ), sprintf( 'We reply within %s hours.', es_setting( 'response_hours' ) ) ); ?></div>
 	</section>

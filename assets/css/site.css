@@ -229,3 +229,31 @@ body.es-locked { overflow: hidden; }
 .es-toc ol ol { margin-top: .25rem; }
 .es-toc li { margin: .25rem 0; }
 .es-prose :is(h2, h3)[id] { scroll-margin-top: 6rem; }
+
+/* Service area pages (templates/area.php), widget sections (parts/embed.php), rating line. */
+.es-regions { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1.5rem; margin: 2rem 0 0; padding: 0; list-style: none; }
+.es-region { overflow: hidden; background: #fff; border: 1px solid var(--es-line); border-radius: calc(var(--es-radius) * 2); }
+.es-region__img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.es-region__body { padding: 1.5rem; }
+.es-region__title { font-size: 1.5rem; }
+.es-region__title a { text-decoration: none; }
+.es-region__title a:hover { text-decoration: underline; }
+.es-chips { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0 0; padding: 0; list-style: none; }
+.es-chips a { display: inline-block; padding: .4rem .8rem; border: 1px solid var(--es-line); border-radius: 999px; background: #fff; font-size: .9375rem; text-decoration: none; }
+.es-chips a:hover { border-color: var(--es-ink); }
+.es-chips--large a { padding: .6rem 1rem; font-size: 1rem; font-weight: 600; }
+.es-letters { display: flex; flex-wrap: wrap; gap: .25rem; margin: 0 0 1.5rem; }
+.es-letters a { display: inline-grid; place-items: center; min-width: 2.75rem; min-height: 2.75rem; border-radius: var(--es-radius); font-weight: 600; text-decoration: none; }
+.es-letters a:hover { background: #fff; }
+.es-towns { columns: 15rem auto; column-gap: 2rem; }
+.es-towns__group { break-inside: avoid; margin: 0 0 1.5rem; scroll-margin-top: 6rem; }
+.es-towns__letter { margin: 0 0 .25rem; font: 700 1.5rem/1 var(--es-font-head); color: var(--es-ink-soft); }
+.es-towns ul { margin: 0; padding: 0; list-style: none; }
+.es-towns li a { display: block; padding: .35rem 0; }
+.es-embed__text { max-width: 44rem; }
+.es-embed__frame { container-type: inline-size; margin-top: 1.5rem; border: 1px solid var(--es-line); border-radius: calc(var(--es-radius) * 2); overflow: hidden; background: #fff; }
+.es-embed__iframe { display: block; width: 100%; border: 0; }
+.es-hero__rating { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: 1rem 0 0; font-weight: 600; }
+.es-hero__stars { color: #f5b400; letter-spacing: .1em; }
+.es-hero--photo .es-hero__rating a { color: #fff; }
+.es-footer__label--office { margin-top: 1.5rem; }

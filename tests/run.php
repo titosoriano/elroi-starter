@@ -508,5 +508,69 @@ $sp_all = wp_list_pluck( es_seo_papers(), 'slug' );
 $check( 'seo papers: with no IDs, every published page and post is exported', in_array( 'home', $sp_all, true ) && in_array( 'inlink-test', $sp_all, true ), $sp_all );
 wp_delete_post( $il_post, true );
 
+// Service area pages: the kind comes from the page tree; listings come from child pages.
+$ar_new = function ( $title, $parent = 0 ) {
+	$id = wp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => $title, 'post_name' => sanitize_title( $title ), 'post_parent' => $parent ) );
+	update_post_meta( $id, '_wp_page_template', 'templates/area.php' );
+	return $id;
+};
+$ar_hub    = $ar_new( 'Areas test hub' );
+$ar_region = $ar_new( 'Bergen County', $ar_hub );
+$ar_fl     = $ar_new( 'Fair Lawn', $ar_region );
+$ar_tn     = $ar_new( 'Teaneck', $ar_region );
+$ar_region2 = $ar_new( 'Rockland County', $ar_hub );
+$ar_ny     = $ar_new( 'Nyack', $ar_region2 );
+$check( 'areas: the page tree sets the kind (hub, region, town)', array( 'hub', 'region', 'town' ) === array( es_area_kind( $ar_hub ), es_area_kind( $ar_region ), es_area_kind( $ar_fl ) ) );
+$ar_h = $render( get_permalink( $ar_hub ) );
+$check( 'areas: the hub lists each region with its towns', str_contains( $ar_h, 'href="' . get_permalink( $ar_region ) . '">Bergen County</a>' ) && str_contains( $ar_h, 'href="' . get_permalink( $ar_fl ) . '">Fair Lawn</a>' ) && str_contains( $ar_h, 'href="' . get_permalink( $ar_ny ) . '">Nyack</a>' ) && str_contains( $ar_h, '2 towns' ) );
+$ar_r = $render( get_permalink( $ar_region ) );
+$check( 'areas: a region lists its towns A to Z and the service pages', str_contains( $ar_r, 'Towns we serve in Bergen County' ) && strpos( $ar_r, '>Fair Lawn</a>' ) < strpos( $ar_r, '>Teaneck</a>' ) && str_contains( $ar_r, 'Our services in Bergen County' ) && str_contains( $ar_r, '>Service one</a>' ) && ! str_contains( $ar_r, '>Nyack</a>' ) );
+$ar_t = $render( get_permalink( $ar_fl ) );
+$check( 'areas: a town lists the other towns of its region, not itself', str_contains( $ar_t, 'More towns in Bergen County' ) && str_contains( $ar_t, '>Teaneck</a>' ) && ! str_contains( $ar_t, 'href="' . get_permalink( $ar_fl ) . '">Fair Lawn</a>' ) );
+foreach ( array( 'hub' => $ar_h, 'region' => $ar_r, 'town' => $ar_t ) as $ar_k => $ar_html ) {
+	$check( "areas: the $ar_k page has one h1, no PHP errors and a breadcrumb trail", 1 === substr_count( $ar_html, '<h1' ) && ! preg_match( '/(Fatal error|Warning:|Notice:|Deprecated:)/', $ar_html ) && str_contains( $ar_html, 'es-crumbs' ) );
+}
+$check( 'areas: a town page marks up the business serving that town as a City', str_contains( $ar_t, '"areaServed":{"@type":"City","name":"Fair Lawn"}' ) && str_contains( $ar_t, '"parentOrganization":{"@id":"' . home_url( '/#organization' ) . '"}' ) );
+$check( 'areas: a region is an AdministrativeArea; no rating without real data', str_contains( $ar_r, '"areaServed":{"@type":"AdministrativeArea","name":"Bergen County"}' ) && ! str_contains( $ar_r, 'aggregateRating' ) && ! str_contains( $ar_r, 'class="es-hero__rating"' ) );
+update_option( 'trustindex-google-page-details', array( 'rating_score' => '4.94', 'rating_number' => '73', 'id' => 'ChIJtest' ) );
+$ar_t = $render( get_permalink( $ar_fl ) );
+$check( 'areas: with the Trustindex Google data, the rating shows under the heading and is marked up', str_contains( $ar_t, 'Rated 4.9 out of 5 from 73 Google reviews' ) && str_contains( $ar_t, 'placeid=ChIJtest' ) && str_contains( $ar_t, '"aggregateRating":{"@type":"AggregateRating","ratingValue":4.9,"reviewCount":73,"bestRating":5}' ), substr( $ar_t, strpos( $ar_t, 'es-hero__' ), 600 ) );
+delete_option( 'trustindex-google-page-details' );
+foreach ( array( $ar_ny, $ar_region2, $ar_tn, $ar_fl, $ar_region, $ar_hub ) as $ar_id ) {
+	wp_delete_post( $ar_id, true );
+}
+
+// Typed service areas, other offices.
+$check(
+	'areas: service area lines become City, AdministrativeArea, State or Place',
+	array(
+		array( '@type' => 'City', 'name' => 'Teaneck, NJ' ),
+		array( '@type' => 'AdministrativeArea', 'name' => 'Bergen County, NJ' ),
+		array( '@type' => 'State', 'name' => 'New Jersey' ),
+		array( '@type' => 'AdministrativeArea', 'name' => 'Rockland County, NY' ),
+		array( '@type' => 'Place', 'name' => 'Morristown, NJ' ),
+	) === array_map( 'es_area_node', array( 'City: Teaneck, NJ', 'county:Bergen County, NJ', 'State: New Jersey', 'Rockland County, NY', 'Morristown, NJ' ) )
+);
+$of_opt = elroi_settings_config()['option'];
+$of_was = get_option( $of_opt, array() );
+update_option( $of_opt, array_merge( (array) $of_was, array( 'offices' => array( array( 'name' => 'New Jersey office', 'phone' => '(201) 555-0100', 'street' => '155 Willowbrook Blvd', 'city' => 'Wayne', 'region' => 'NJ', 'zip' => '07470' ) ) ) ) );
+$of_home = $render( home_url( '/' ) );
+$check( 'offices: another office shows in the footer with its phone and address', str_contains( $of_home, 'New Jersey office</p>' ) && str_contains( $of_home, 'tel:+12015550100' ) && str_contains( $of_home, '155 Willowbrook Blvd, Wayne, NJ 07470' ), substr( $of_home, strpos( $of_home, 'es-footer' ), 300 ) );
+$check( 'offices: the business node lists it as a department with its address', str_contains( $of_home, '"department":[{"@type":"' ) && str_contains( $of_home, '"@id":"' . home_url( '/#office-1' ) . '"' ) && str_contains( $of_home, '"streetAddress":"155 Willowbrook Blvd"' ) );
+update_option( $of_opt, $of_was );
+
+// Widget section on service pages.
+$em_one = get_page_by_path( 'services/service-one' );
+$em_raw = get_post_meta( $em_one->ID, '_elroi_content', true );
+$em_c   = json_decode( $em_raw, true );
+$em_c['embed'] = array( 'url' => 'https://widgets.gaf.com/hdz-widget', 'heading' => 'Pick your *shingle color*', 'title' => 'GAF shingle color explorer', 'height' => 90, 'min_height' => 520 );
+update_post_meta( $em_one->ID, '_elroi_content', wp_slash( wp_json_encode( $em_c ) ) );
+$em_html = $render( get_permalink( $em_one ) );
+$check( 'embed: a service page shows the widget lazily, with its title and a width-based height', str_contains( $em_html, '<iframe src="https://widgets.gaf.com/hdz-widget" title="GAF shingle color explorer" class="es-embed__iframe" style="height:max(520px,90cqi)" loading="lazy"' ) && str_contains( $em_html, 'Pick your <em>shingle color</em>' ), substr( $em_html, (int) strpos( $em_html, 'es-embed' ), 500 ) );
+$em_c['embed']['url'] = 'https://evil.example.com/x';
+update_post_meta( $em_one->ID, '_elroi_content', wp_slash( wp_json_encode( $em_c ) ) );
+$check( 'embed: a widget from a site that is not allowed never prints', ! str_contains( $render( get_permalink( $em_one ) ), 'class="es-section es-embed"' ) );
+update_post_meta( $em_one->ID, '_elroi_content', wp_slash( $em_raw ) );
+
 $failed = array_values( array_filter( $results, fn( $r ) => ! $r['ok'] ) );
 echo wp_json_encode( array( 'passed' => count( $results ) - count( $failed ), 'failed' => count( $failed ), 'fails' => $failed ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );

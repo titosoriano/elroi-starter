@@ -7,7 +7,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'ES_VERSION', '1.8.0' );
+define( 'ES_VERSION', '1.9.0' );
 define( 'ES_DIR', get_template_directory() );
 define( 'ES_URI', get_template_directory_uri() );
 // In a client child theme these point at the child; on the starter itself they equal ES_DIR / ES_URI.
@@ -27,6 +27,7 @@ require_once ES_DIR . '/inc/inlinks.php';
 require_once ES_DIR . '/inc/images.php';
 require_once ES_DIR . '/inc/first-paint.php';
 require_once ES_DIR . '/inc/seo.php';
+require_once ES_DIR . '/inc/areas.php';
 require_once ES_DIR . '/inc/seo-papers.php';
 require_once ES_DIR . '/inc/motion.php';
 require_once ES_DIR . '/inc/speed.php';

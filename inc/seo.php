@@ -1,7 +1,7 @@
 <?php
 /**
  * Structured data (JSON-LD) from Site Settings and page content: the business, breadcrumbs on
- * inner pages, Service on service pages, WebPage with its dates, FAQPage wherever a page has questions, and VideoObject for every video field (inc/video.php). Titles, descriptions, Open Graph and
+ * inner pages, Service on service pages, a local business on service area pages (inc/areas.php), WebPage with its dates, FAQPage wherever a page has questions, and VideoObject for every video field (inc/video.php). Titles, descriptions, Open Graph and
  * the sitemap are left to Rank Math.
  *
  * With Rank Math's Schema module on, everything goes into Rank Math's single graph: the business
@@ -37,9 +37,13 @@ function es_business_schema() {
 			'addressCountry'  => 'US',
 		);
 	}
-	$areas = array_values( array_filter( (array) es_setting( 'service_areas' ) ) );
+	$areas = es_area_nodes();
 	if ( $areas ) {
-		$node['areaServed'] = array_map( fn( $a ) => array( '@type' => 'Place', 'name' => $a ), $areas );
+		$node['areaServed'] = $areas;
+	}
+	$offices = es_office_nodes();
+	if ( $offices ) {
+		$node['department'] = $offices;
 	}
 	$same = array_values( es_social_links() );
 	if ( $same ) {
@@ -150,9 +154,9 @@ function es_service_schema() {
 		'url'         => get_permalink(),
 		'provider'    => array( '@id' => home_url( '/#organization' ) ),
 	);
-	$areas = array_values( array_filter( (array) es_setting( 'service_areas' ) ) );
+	$areas = es_area_nodes();
 	if ( $areas ) {
-		$node['areaServed'] = array_map( fn( $a ) => array( '@type' => 'Place', 'name' => $a ), $areas );
+		$node['areaServed'] = $areas;
 	}
 	if ( has_post_thumbnail() ) {
 		$node['image'] = get_the_post_thumbnail_url( null, 'full' );
@@ -209,6 +213,10 @@ add_filter(
 		if ( $service ) {
 			$data['es_service'] = $service;
 		}
+		$area = es_area_schema();
+		if ( $area ) {
+			$data['es_area'] = $area;
+		}
 		foreach ( es_videos_schema() as $i => $video ) {
 			$data[ 'es_video_' . $i ] = $video;
 		}
@@ -229,7 +237,7 @@ add_action(
 		if ( ! function_exists( 'elroi_content' ) || es_rank_math_schema() ) {
 			return;
 		}
-		$graph = array_values( array_filter( array_merge( array( is_front_page() ? es_business_schema() : null, es_webpage_schema(), es_breadcrumb_schema(), es_faq_schema(), es_service_schema() ), es_videos_schema() ) ) );
+		$graph = array_values( array_filter( array_merge( array( is_front_page() ? es_business_schema() : null, es_webpage_schema(), es_breadcrumb_schema(), es_faq_schema(), es_service_schema(), es_area_schema() ), es_videos_schema() ) ) );
 		if ( $graph ) {
 			printf( "<script type=\"application/ld+json\">%s</script>\n", wp_json_encode( array( '@context' => 'https://schema.org', '@graph' => $graph ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) );
 		}

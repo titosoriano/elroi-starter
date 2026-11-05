@@ -89,6 +89,28 @@ function es_cta_field() {
 	);
 }
 
+/**
+ * A widget section (manufacturer color tool, map, booking calendar), shown when an address is
+ * filled in. Needs ElRoi Site Editor 1.5+ (the `embed` field type); empty array before that.
+ */
+function es_embed_field() {
+	if ( ! function_exists( 'elroi_embed_url' ) ) {
+		return array();
+	}
+	return array(
+		'type'   => 'group',
+		'label'  => 'Widget (optional)',
+		'fields' => array(
+			'url'        => array( 'type' => 'embed', 'label' => 'Widget address', 'help' => 'Leave empty to hide the section.' ),
+			'heading'    => array( 'type' => 'heading', 'label' => 'Heading', 'default' => 'See it *for yourself.*' ),
+			'text'       => array( 'type' => 'textarea', 'label' => 'Text' ),
+			'title'      => array( 'label' => 'What the widget is', 'default' => 'Interactive tool', 'help' => 'Read out by screen readers, e.g. "GAF shingle color explorer".', 'half' => true ),
+			'height'     => array( 'type' => 'number', 'label' => 'Height (% of its width)', 'default' => 75, 'help' => 'Widgets that get taller as they get wider need a percentage: measure the widget at phone and desktop widths.', 'half' => true ),
+			'min_height' => array( 'type' => 'number', 'label' => 'Smallest height (pixels)', 'default' => 480, 'half' => true ),
+		),
+	);
+}
+
 add_action(
 	'after_setup_theme',
 	function () {
@@ -115,7 +137,7 @@ add_action(
 									'half'    => true,
 								),
 								'description'   => array( 'type' => 'textarea', 'label' => 'One-sentence description', 'default' => 'Licensed and insured local experts.', 'help' => 'Used by Google and in the footer.' ),
-								'service_areas' => array( 'type' => 'lines', 'label' => 'Towns and areas you serve', 'help' => 'One per line, e.g. Morristown, NJ. Google uses these to show the business for local searches, most of all when there is no storefront address.' ),
+								'service_areas' => array( 'type' => 'lines', 'label' => 'Towns and areas you serve', 'help' => 'One per line, e.g. Morristown, NJ. Google uses these to show the business for local searches, most of all when there is no storefront address. Start a line with City:, County: or State: to say what kind of place it is, e.g. City: Morristown, NJ.' ),
 							),
 						),
 						'contact'  => array(
@@ -128,6 +150,21 @@ add_action(
 								'region' => array( 'label' => 'State', 'half' => true, 'clearable' => true ),
 								'zip'    => array( 'label' => 'ZIP code', 'half' => true, 'clearable' => true ),
 								'hours'  => array( 'type' => 'lines', 'label' => 'Opening hours', 'help' => 'One line each, e.g. Mon to Fri: 8am to 6pm. Leave empty to hide.' ),
+								'offices' => array(
+									'type'   => 'repeater',
+									'label'  => 'Other offices',
+									'item'   => 'Office',
+									'title'  => 'name',
+									'help'   => 'Only real offices where the business works or meets customers. Each one shows in the footer and tells Google it is a location of the business.',
+									'fields' => array(
+										'name'   => array( 'label' => 'Office name', 'help' => 'e.g. New Jersey office', 'half' => true ),
+										'phone'  => array( 'label' => 'Phone', 'half' => true ),
+										'street' => array( 'label' => 'Street address' ),
+										'city'   => array( 'label' => 'City', 'half' => true ),
+										'region' => array( 'label' => 'State', 'half' => true ),
+										'zip'    => array( 'label' => 'ZIP code', 'half' => true ),
+									),
+								),
 							),
 						),
 						'numbers'  => array(
@@ -279,10 +316,26 @@ add_action(
 			'templates/service.php',
 			array(
 				'label'  => 'Service page',
+				'fields' => array_filter(
+					array(
+						'hero'     => es_hero_fields(),
+						'sections' => es_sections_field(),
+						'video'    => es_video_field(),
+						'embed'    => es_embed_field(),
+						'faqs'     => es_faq_field(),
+						'cta'      => es_cta_field(),
+					)
+				),
+			)
+		);
+
+		elroi_register_template(
+			'templates/area.php',
+			array(
+				'label'  => 'Service area page',
 				'fields' => array(
 					'hero'     => es_hero_fields(),
 					'sections' => es_sections_field(),
-					'video'    => es_video_field(),
 					'faqs'     => es_faq_field(),
 					'cta'      => es_cta_field(),
 				),

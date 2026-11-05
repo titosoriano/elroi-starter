@@ -90,4 +90,32 @@
 	// After sending the form, move focus to its message so screen readers announce it.
 	var notice = document.querySelector('[data-es-notice]');
 	if (notice) notice.focus();
+
+	// Key events for Google Analytics, when Site Kit or another tag defines gtag or dataLayer
+	// (nothing is sent otherwise): calls, emails, WhatsApp, estimate buttons and sent forms. Mark
+	// them as key events in GA4 > Admin > Events. window.esTrack( name, params ) sends a child theme's own.
+	function track(name, params) {
+		params = params || {};
+		if (typeof window.gtag === 'function') window.gtag('event', name, params);
+		else if (window.dataLayer && window.dataLayer.push) window.dataLayer.push(Object.assign({ event: name }, params));
+	}
+	window.esTrack = track;
+	document.addEventListener('click', function (e) {
+		var a = e.target.closest ? e.target.closest('a[href]') : null;
+		if (!a) return;
+		var href = a.getAttribute('href') || '';
+		if (/^tel:/i.test(href)) track('click_call', { link_url: href });
+		else if (/^mailto:/i.test(href)) track('click_email', { link_url: href });
+		else if (/(^https?:\/\/)?(wa\.me|api\.whatsapp\.com)\//i.test(href)) track('click_whatsapp', { link_url: href });
+		else if (/#lead-form$/.test(href)) track('click_quote', { link_text: (a.textContent || '').trim().slice(0, 100) });
+	});
+	// A sent form comes back with ?lead=sent: count it once, then drop the flag so a reload does not count it again.
+	if (window.URLSearchParams && window.history && history.replaceState) {
+		var q = new URLSearchParams(location.search);
+		if (q.get('lead') === 'sent') {
+			track('form_submit', { form_id: 'lead-form' });
+			q.delete('lead');
+			history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q.toString() : '') + location.hash);
+		}
+	}
 })();
