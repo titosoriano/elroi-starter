@@ -18,7 +18,7 @@ foreach ( (array) ( $args['sections'] ?? array() ) as $i => $s ) :
 				<?php if ( ! empty( $s['heading'] ) ) : ?>
 					<h2 class="es-h2" id="es-s<?php echo (int) $i; ?>"><?php echo elroi_heading( $s['heading'] ); // phpcs:ignore ?></h2>
 				<?php endif; ?>
-				<?php echo elroi_paragraphs( $s['paragraphs'] ?? array(), '', true ); // phpcs:ignore ?>
+				<?php echo es_paragraphs( $s['paragraphs'] ?? array() ); // phpcs:ignore ?>
 				<?php if ( ! empty( $s['bullets'] ) ) : ?>
 					<ul class="es-checks">
 						<?php foreach ( $s['bullets'] as $b ) : ?>

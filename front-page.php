@@ -67,7 +67,7 @@ get_header();
 		<div class="es-container es-about__grid">
 			<div data-es-reveal>
 				<h2 class="es-h2" id="es-about-title"><?php echo elroi_heading( $c['about']['heading'] ); // phpcs:ignore ?></h2>
-				<?php echo elroi_paragraphs( $c['about']['paragraphs'], '', true ); // phpcs:ignore ?>
+				<?php echo es_paragraphs( $c['about']['paragraphs'] ); // phpcs:ignore ?>
 				<?php if ( $c['about']['facts'] ) : ?>
 					<dl class="es-facts">
 						<?php foreach ( $c['about']['facts'] as $f ) : ?>

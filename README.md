@@ -16,7 +16,7 @@ A lean, hand-coded WordPress theme made to work with [ElRoi Site Editor](https:/
 - **Optional cinematic motion:** GSAP, ScrollTrigger and Lenis smooth scroll, self-hosted and off until the theme turns them on, with simple attributes for word-by-word headings, parallax, shutter reveals and videos that play on screen.
 - **Accessible by default:** skip link, visible focus, keyboard dropdowns, a mobile menu that locks the page behind it, labelled form fields, reduced-motion support.
 - **One file to brand it:** colors, fonts and radius in `assets/css/tokens.css`.
-- **Built for Rank Math:** business details, service areas, FAQs and breadcrumbs go into Rank Math's structured data, clients can add inline links, and `tests/seo_scores.py` fails any page scoring under 80.
+- **Built for Rank Math:** business details, service areas, FAQs and breadcrumbs go into Rank Math's structured data, clients can add inline links, and the score check fails any page scoring under 80.
 - **Forms designed first, connected last:** the built-in form keeps every message in wp-admin; paste a CRM form (HighLevel, HubSpot, Jotform...) under Form messages > Connect a form and it appears in the same designed box on every page. Site Health reminds you while it is not connected.
 - **Videos Google can find:** a video field with a fast cover-and-play player and VideoObject structured data.
 - **Readable posts:** an automatic "On this page" list on longer blog posts.
@@ -24,6 +24,8 @@ A lean, hand-coded WordPress theme made to work with [ElRoi Site Editor](https:/
 - **Updates itself:** client sites run the starter as the parent theme and get its improvements as a normal theme update.
 - **Backup check:** Tools > Site Health warns when there is no recent off-site backup.
 - **Blog that fills whole rows:** a featured newest post plus 9 cards on page 1 and 12 after, so no post sits alone on a last page; reading time, updated dates and "Keep reading" on posts, credited to the business.
+- **In-text links:** list each key page and the words for it in Site Settings, and natural mentions in page and blog text link to it (5 a page at most, never in headings).
+- **Rank Math scores in seconds:** `tests/rank-math/score.js` runs Rank Math's own analyzer on an export from `wp es seo-papers`, with no browser or password, and fails any page under 80.
 - **Freshness and Service schema:** service pages describe the service, its provider and area in structured data, and pages show when they were last updated.
 - **Nothing blocks the first paint:** the theme's stylesheets print inside each page (minified, cached until the file changes) instead of as separate files, fonts the first screen uses can be preloaded, and WebP never reaches the site icon or link previews.
 - **Speed settings that keep the animations working:** Tools > Site Health > Speed settings sets LiteSpeed Cache safely in one click (cache on, minify on; JS delay, combine, unused-CSS and LiteSpeed lazy load off), keeps pages fresh in visitors' browsers, and reports Google Fonts added by plugins.

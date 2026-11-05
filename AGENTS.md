@@ -38,6 +38,8 @@ Each client site is a **child theme** of this one, in a **private** repository n
 - `inc/lead-form.php`: the contact form (`es_lead_form( $title, $text )`). Saves a private "Form messages" post, emails `form_email` (or the admin email), and optionally sends the lead to HighLevel and checks Cloudflare Turnstile. Server-only settings go in `wp-config.php`, never in the repo: `ELROI_GHL_TOKEN`, `ELROI_GHL_LOCATION`, optional `ELROI_GHL_PIPELINE`, `ELROI_GHL_STAGE`, `ELROI_GHL_MESSAGE_FIELD`; `ELROI_TURNSTILE_SITE`, `ELROI_TURNSTILE_SECRET`. HighLevel tags: `website-lead`, `website-request` (removed and re-added on each message so a "Tag added" workflow fires every time) and `service-<slug>`.
 - `inc/form-connect.php`: **forms are designed first, connected last.** The built-in form keeps every message under Form messages while the site is built. Form messages > **Connect a form** switches every `es_lead_form()` to a pasted CRM embed code or form shortcode, inside the same designed box (title, text, `#lead-form` anchor); switching back keeps the code. Tools > Site Health warns while messages only stay in wp-admin (no CRM form, HighLevel or SMTP plugin). Never hard-code a CRM embed in a template.
 - `inc/video.php` + `parts/video.php`: `es_video_field()` (title, YouTube/Vimeo/MP4 link, description, cover, date). The cover loads the player only when pressed (youtube-nocookie). Every value with a `video_url` in a page's fields becomes a VideoObject in the schema, with no extra wiring; a video without a cover (Vimeo, MP4) gets no schema because Google requires one. Background loops are decoration, not videos: never give them a `video_url` field.
+- `inc/inlinks.php`: in-text links. Site Settings > In-text links maps words to pages (rows in priority order; `es_link_map` filter for child themes); a natural mention in a body paragraph of a page (`es_paragraphs()`, which designed templates use instead of `elroi_paragraphs()`) or in a post's paragraphs and list items links to its page. At most 5 per page and 2 per paragraph, each page once, never the page itself, a page the text already links to, headings, buttons or paragraphs under 80 characters (`es_inlink_limits`). No rows, no links.
+- `inc/seo-papers.php`: `wp es seo-papers` exports what Rank Math's analyzer needs for every page and post (the printed title and description, the focus keywords, the visible text of designed pages, the featured image), for `tests/rank-math/score.js`.
 - `inc/blog.php`: blog pages hold whole rows of the 3-column grid: page 1 is the newest post as a feature plus 9 cards, later pages and archives 12 (`es_blog_page_sizes`; later blog pages use an offset and the page count is corrected, so no post sits alone on a last page). Posts show reading time and "Updated <date>" when changed on a later day, "Keep reading" lists 3 posts (same category first, `es_related_posts()`), and cards come from `es_post_card()`. Rank Math's BlogPosting credits the business, not the WordPress user (`es_post_author_business`).
 - `inc/toc.php`: posts with two or more H2s get an "On this page" list and heading ids, unless the post already has a table of contents block. Rank Math's TOC check is told the site has one (`es_toc` filter turns both off).
 - `inc/images.php`: new uploads get WebP resized copies when the server supports it (originals kept; older photos need "Regenerate thumbnails", or `wp media regenerate <ids> --skip-delete`, which keeps the old JPEG sizes that post bodies may link to). The site icon stays PNG/JPEG (iOS ignores WebP touch icons), and Rank Math's share images (`og:image`, `twitter:image`) point to the original upload, since some apps show no link preview for WebP. Pass `'sizes' => es_sizes( 'full'|'wide'|'half'|'third'|'card' )` to every `elroi_image()` so phones download a small copy; the first photo of a page gets `loading="eager"` and `fetchpriority="high"`, every other one stays lazy.
@@ -97,12 +99,30 @@ Needs ElRoi Site Editor 1.1+, which makes Rank Math score each designed page as 
 - The page title holds the focus keyword phrase (Rank Math checks it against the title); give the page a **Short name** (ElRoi Site Editor 1.4+, sidebar box) so menus and breadcrumbs stay short. Templates print the title as an `<h1>` only through `es_page_title()`, which keeps the full phrase.
 - One focus keyword per page, never two pages on the same keyword: keep the map in the client repo (`seo/keyword-map.md`: keyword, page, pages linking to it, score). Put the keyword in the SEO title, the meta description, the H1 or first paragraph, one image's alt text, and link to the page from at least one other page.
 - Rank Math wants 600+ words per page: give designed pages a real text section (sections, FAQs) rather than padding.
-- Before handover and after content changes, run the score check: every page and post must score 80 or more.
+- Fill in Site Settings > In-text links: each service or key page with the words a reader would use for it (longest first), most important pages first. Rank Math counts the links, and search engines learn which page answers which search.
+- Before handover and after content or code changes, run the score check: every page and post must score 80 or more.
+
+What brought every indexed Nuvista page and post to 83 or more (its blog posts had computed 55 to 82):
+- SEO title of 60 characters or fewer with the focus keyword near the start, a number and a positive or power word ("7 Reliable ...", "Easy ... From 4.99%").
+- The keyword word for word in the page title (Short name for menus), the meta description, one H2, the first paragraph and one image's alt text (only where the alt stays true).
+- Keyword density between 1% and 2.5%. Rank Math counts every focus keyword (the first is the main one, the rest secondary): `tests/rank-math/secsearch.js` finds the one or two secondary phrases the page already uses that bring it into the band. Too many mentions push it over 2.5% and lose the test.
+- One link to another site (a manufacturer, a licence lookup, a reviews profile) and in-text links to other pages.
+- Leave the slug alone on a live page: the keyword-in-URL points are not worth a broken link.
+- What still costs points is usually length (under 600 words for pages, 2,500 for full marks) and the keyword in the slug; fix real gaps, never pad.
+
+The score check runs Rank Math's own `analyzer.js` in Node on an export, with no browser or password, and gives the same numbers as wp-admin (checked on Nuvista: 5 of 5 pages identical):
+
+```bash
+sh tests/rank-math/fetch.sh https://client.com             # once, and after Rank Math updates
+wp es seo-papers --out=papers.json                        # on the site, or Novamira run-wp-cli with --out under wp-content/uploads (download it, then delete it)
+node tests/rank-math/score.js papers.json --min 80        # each page's score and the checks that lost points; exits 1 under the minimum
+```
+
+Locally, Playground serves the same export at `/es-tests/rank-math/papers.php` (Rank Math must be installed there). `tests/seo_scores.py` does the same check through wp-admin in a browser, when no shell or Novamira access exists:
 
 ```bash
 pip install playwright && python3 -m playwright install chromium
-python3 tests/seo_scores.py --site http://127.0.0.1:9401 --playground            # local
-ES_WP_USER=... ES_WP_PASS=... python3 tests/seo_scores.py --site https://client.com  # live (never commit the password)
+ES_WP_USER=... ES_WP_PASS=... python3 tests/seo_scores.py --site https://client.com  # never commit the password
 ```
 
 ## Verify

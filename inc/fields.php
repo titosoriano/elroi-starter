@@ -155,6 +155,22 @@ add_action(
 								'google'    => array( 'type' => 'url', 'label' => 'Google Business profile', 'clearable' => true ),
 							),
 						),
+						'inlinks'  => array(
+							'label'       => 'In-text links',
+							'description' => 'When page or blog text mentions these words, they link to the page you choose: up to 5 links a page and 2 a paragraph, each page once, never in headings or short lines. Put the most important pages first. Leave empty for no automatic links.',
+							'fields'      => array(
+								'inlinks' => array(
+									'type'   => 'repeater',
+									'label'  => 'Words and pages',
+									'item'   => 'Link',
+									'title'  => 'words',
+									'fields' => array(
+										'words' => array( 'label' => 'Words that link', 'help' => 'Separated by commas, longest first, e.g. kitchen remodeling, kitchen remodel, kitchens' ),
+										'to'    => array( 'type' => 'link', 'label' => 'Page they link to' ),
+									),
+								),
+							),
+						),
 					),
 				)
 			)

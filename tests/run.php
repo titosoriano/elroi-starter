@@ -431,5 +431,82 @@ $es_jpg = array( 'id' => $es_att, 'url' => $es_up['baseurl'] . '/photo.jpg', 'ty
 $check( 'webp: share images that are not WebP are left alone', $es_jpg === apply_filters( 'rank_math/opengraph/twitter/image_array', $es_jpg ) );
 wp_delete_attachment( $es_att, true );
 
+// In-text links: off without a map; with one, mentions in long body paragraphs link once each.
+$il_two  = get_page_by_path( 'services/service-two' );
+$il_raw  = get_post_meta( $il_two->ID, '_elroi_content', true );
+$il_long = ' We plan every job with you, write the scope down and keep the site clean every day.';
+update_post_meta(
+	$il_two->ID,
+	'_elroi_content',
+	wp_slash(
+		wp_json_encode(
+			array(
+				'sections' => array(
+					array(
+						'heading'    => 'Kitchen remodeling and more',
+						'paragraphs' => array(
+							'We handle kitchen remodeling and bathroom remodeling, and roofing too.' . $il_long,
+							'Our roofing crews also fix gutters, and kitchen remodeling questions are welcome.' . $il_long,
+							'Roofing and painting too.',
+							'Ask about [painting](/blog/) and painting the trim of older homes every spring.' . $il_long,
+						),
+					),
+				),
+			)
+		)
+	)
+);
+$il_url  = get_permalink( $il_two );
+$il_html = $render( $il_url );
+$check( 'in-text links: none without rows in Site Settings', ! str_contains( $il_html, 'es-inlink' ) );
+$il_opt  = elroi_settings_config()['option'];
+$il_was  = get_option( $il_opt, array() );
+$il_rows = array(
+	array( 'words' => 'kitchen remodeling, kitchens', 'to' => '/services/service-one/' ),
+	array( 'words' => 'bathroom remodeling', 'to' => '/about/' ),
+	array( 'words' => 'roofing', 'to' => '/contact/' ),
+	array( 'words' => 'gutters', 'to' => '/services/service-two/' ),
+	array( 'words' => 'painting', 'to' => '/blog/' ),
+	array( 'words' => 'windows', 'to' => '/services/' ),
+	array( 'words' => 'siding', 'to' => '/' ),
+);
+update_option( $il_opt, array_merge( (array) $il_was, array( 'inlinks' => $il_rows ) ) );
+$il_html = $render( $il_url );
+preg_match_all( '#<a class="es-inlink" href="([^"]+)">([^<]+)</a>#', $il_html, $il_m );
+$il_paths = array_map( fn( $u ) => wp_parse_url( $u, PHP_URL_PATH ), $il_m[1] );
+$check( 'in-text links: mentions link to their page, each page once, 2 per paragraph at most (kitchen, bathroom, then roofing in the next paragraph)', array( '/services/service-one/', '/about/', '/contact/' ) === $il_paths, $il_m[0] );
+$check( 'in-text links: never to the page itself, never in headings, short lines or where the text already links', ! preg_match( '#<h2[^>]*>[^<]*<a#', $il_html ) && ! str_contains( $il_html, 'es-inlink" href="' . esc_url( home_url( '/blog/' ) ) ) && ! str_contains( $il_html, 'es-inlink" href="' . esc_url( $il_url ) ), $il_m[0] );
+$check( 'in-text links: the page still has one h1 and no PHP errors', 1 === substr_count( $il_html, '<h1' ) && ! preg_match( '/(Fatal error|Warning:|Notice:|Deprecated:)/', $il_html ) );
+$il_post = wp_insert_post(
+	array(
+		'post_status'  => 'publish',
+		'post_title'   => 'In-text link test',
+		'post_name'    => 'inlink-test',
+		'post_content' => '<h2>Siding</h2><p>Kitchen remodeling, bathroom remodeling and roofing were all on the list for this house last year.</p>'
+			. '<p>The roofing crew also replaced the gutters before the winter storms arrived in the middle of December.</p>'
+			. '<ul><li>We also talked about painting the porch and new windows for the back of the house next spring.</li></ul>'
+			. '<p>Siding came last, once the rest of the outside of the house was finished and the weather turned warm.</p>',
+	)
+);
+$il_phtml = $render( get_permalink( $il_post ) );
+$check( 'in-text links: a blog post gets at most 5, in paragraphs and list items', 5 === substr_count( $il_phtml, 'class="es-inlink"' ) && str_contains( $il_phtml, '>painting</a>' ) && ! str_contains( $il_phtml, '>windows</a>' ) && ! str_contains( $il_phtml, '>Siding</a>' ), substr_count( $il_phtml, 'class="es-inlink"' ) );
+update_option( $il_opt, $il_was );
+'' === $il_raw ? delete_post_meta( $il_two->ID, '_elroi_content' ) : update_post_meta( $il_two->ID, '_elroi_content', wp_slash( $il_raw ) );
+
+// Score export for Rank Math's analyzer (tests/rank-math/score.js).
+$sp_one   = get_page_by_path( 'services/service-one' );
+$sp_items = es_seo_papers( array( $sp_one->ID, $il_post ) );
+$sp_page  = $sp_items[0] ?? array();
+$sp_post  = $sp_items[1] ?? array();
+$check( 'seo papers: a designed page is scored on its visible text inside <main>, without scripts or icons', ! empty( $sp_page['designed'] ) && str_contains( $sp_page['content'], 'What is included' ) && str_contains( $sp_page['content'], '<h1' ) && ! preg_match( '/<(script|svg|style)\b/i', $sp_page['content'] ) && ! str_contains( $sp_page['content'], 'aria-hidden="true"' ), array_diff_key( $sp_page, array( 'content' => 1 ) ) + array( 'start' => substr( (string) ( $sp_page['content'] ?? '' ), 0, 300 ) ) );
+$check( 'seo papers: a post is scored on its stored content, with its type, slug and address', isset( $sp_post['content'] ) && str_starts_with( $sp_post['content'], '<h2>Siding</h2>' ) && 'post' === $sp_post['type'] && 'inlink-test' === $sp_post['slug'] && get_permalink( $il_post ) === $sp_post['url'], $sp_post );
+update_post_meta( $sp_one->ID, 'rank_math_focus_keyword', 'service one, service' );
+$sp_kw = es_seo_papers( array( $sp_one->ID ) )[0];
+$check( 'seo papers: the focus keyword and the secondary keywords come from Rank Math\'s field', 'service one' === $sp_kw['keyword'] && array( 'service one', 'service' ) === $sp_kw['keywords'], $sp_kw['keywords'] );
+delete_post_meta( $sp_one->ID, 'rank_math_focus_keyword' );
+$sp_all = wp_list_pluck( es_seo_papers(), 'slug' );
+$check( 'seo papers: with no IDs, every published page and post is exported', in_array( 'home', $sp_all, true ) && in_array( 'inlink-test', $sp_all, true ), $sp_all );
+wp_delete_post( $il_post, true );
+
 $failed = array_values( array_filter( $results, fn( $r ) => ! $r['ok'] ) );
 echo wp_json_encode( array( 'passed' => count( $results ) - count( $failed ), 'failed' => count( $failed ), 'fails' => $failed ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );

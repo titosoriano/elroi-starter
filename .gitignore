@@ -2,3 +2,5 @@ dist/
 .DS_Store
 assets/vendor/*.js
 assets/vendor/LICENSE-*.txt
+tests/rank-math/vendor/
+papers.json
