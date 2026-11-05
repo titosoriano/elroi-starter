@@ -49,7 +49,12 @@ function es_business_schema() {
 	if ( $logo ) {
 		$node['logo'] = wp_get_attachment_image_url( $logo, 'full' );
 	}
-	return array_filter( $node );
+	/**
+	 * Client child themes add or change details here (extra profiles, offers, a logo fallback).
+	 *
+	 * @param array $node The business node.
+	 */
+	return array_filter( (array) apply_filters( 'es_business_schema', $node ) );
 }
 
 /**

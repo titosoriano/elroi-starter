@@ -21,17 +21,22 @@ A lean, hand-coded WordPress theme made to work with [ElRoi Site Editor](https:/
 - **Videos Google can find:** a video field with a fast cover-and-play player and VideoObject structured data.
 - **Readable posts:** an automatic "On this page" list on longer blog posts.
 - **Lighter photos:** WebP copies for new uploads and the right photo size for each screen.
+- **Updates itself:** client sites run the starter as the parent theme and get its improvements as a normal theme update.
+- **Backup check:** Tools > Site Health warns when there is no recent off-site backup.
 
 ![Service page](docs/service.png)
 
 ## Starting a client website
 
-1. Click **Use this template** to create the client's private repository.
-2. Brand it in `assets/css/tokens.css`, then design and register the client's pages (see [`AGENTS.md`](AGENTS.md)).
-3. On the client's WordPress: install [ElRoi Site Editor](https://github.com/titosoriano/elroi-site-editor/releases/latest), then upload the theme zip from `bin/build.sh`.
-4. Create the pages, menu and Site Settings, then give the client an **Editor** account.
+1. Run `sh bin/new-client.sh acme-website "Acme Roofing"`. It creates a **child theme** of the starter for the client; push it to a private repository.
+2. Brand it in the child's `assets/css/tokens.css`, then design and register the client's pages (see [`AGENTS.md`](AGENTS.md)).
+3. On the client's WordPress: install [ElRoi Site Editor](https://github.com/titosoriano/elroi-site-editor/releases/latest) and [ElRoi Starter](https://github.com/titosoriano/elroi-starter/releases/latest) (`elroi-starter.zip`), then upload and activate the child theme.
 
-[`AGENTS.md`](AGENTS.md) is the full guide for developers and AI agents: structure, rules, local testing on WordPress Playground, and deployment.
+Starter improvements reach every client as a normal theme update ("New version available" for ElRoi Starter); the client's own design in the child theme is never touched.
+
+## Releases
+
+Bump the version in `style.css` and `functions.php`, push to `main`, and the Release workflow builds `elroi-starter.zip` and attaches it to a new GitHub release. Sites pick it up from there.
 
 ## Requirements
 

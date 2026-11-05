@@ -96,63 +96,67 @@ add_action(
 			return;
 		}
 
+		// A client child theme changes defaults or adds fields through the es_settings filter.
 		elroi_register_settings(
-			array(
-				'support'  => 'ElRoi Marketing (elroi.marketing)',
-				'sections' => array(
-					'business' => array(
-						'label'  => 'Business',
-						'fields' => array(
-							'company'       => array( 'label' => 'Business name', 'default' => 'Your Company' ),
-							'business_type' => array(
-								'type'    => 'select',
-								'label'   => 'Type of business (for Google)',
-								'options' => array( 'LocalBusiness', 'GeneralContractor', 'HomeAndConstructionBusiness', 'ProfessionalService', 'MedicalBusiness', 'LegalService', 'Restaurant', 'Store' ),
-								'default' => 'LocalBusiness',
-								'half'    => true,
+			apply_filters(
+				'es_settings',
+				array(
+					'support'  => 'ElRoi Marketing (elroi.marketing)',
+					'sections' => array(
+						'business' => array(
+							'label'  => 'Business',
+							'fields' => array(
+								'company'       => array( 'label' => 'Business name', 'default' => 'Your Company' ),
+								'business_type' => array(
+									'type'    => 'select',
+									'label'   => 'Type of business (for Google)',
+									'options' => array( 'LocalBusiness', 'GeneralContractor', 'HomeAndConstructionBusiness', 'ProfessionalService', 'MedicalBusiness', 'LegalService', 'Restaurant', 'Store' ),
+									'default' => 'LocalBusiness',
+									'half'    => true,
+								),
+								'description'   => array( 'type' => 'textarea', 'label' => 'One-sentence description', 'default' => 'Licensed and insured local experts.', 'help' => 'Used by Google and in the footer.' ),
+								'service_areas' => array( 'type' => 'lines', 'label' => 'Towns and areas you serve', 'help' => 'One per line, e.g. Morristown, NJ. Google uses these to show the business for local searches, most of all when there is no storefront address.' ),
 							),
-							'description'   => array( 'type' => 'textarea', 'label' => 'One-sentence description', 'default' => 'Licensed and insured local experts.', 'help' => 'Used by Google and in the footer.' ),
-							'service_areas' => array( 'type' => 'lines', 'label' => 'Towns and areas you serve', 'help' => 'One per line, e.g. Morristown, NJ. Google uses these to show the business for local searches, most of all when there is no storefront address.' ),
+						),
+						'contact'  => array(
+							'label'  => 'Contact',
+							'fields' => array(
+								'phone'  => array( 'label' => 'Phone', 'default' => '(555) 010-0000', 'half' => true ),
+								'email'  => array( 'type' => 'email', 'label' => 'Email', 'default' => 'hello@example.com', 'half' => true ),
+								'street' => array( 'label' => 'Street address', 'clearable' => true ),
+								'city'   => array( 'label' => 'City', 'half' => true, 'clearable' => true ),
+								'region' => array( 'label' => 'State', 'half' => true, 'clearable' => true ),
+								'zip'    => array( 'label' => 'ZIP code', 'half' => true, 'clearable' => true ),
+								'hours'  => array( 'type' => 'lines', 'label' => 'Opening hours', 'help' => 'One line each, e.g. Mon to Fri: 8am to 6pm. Leave empty to hide.' ),
+							),
+						),
+						'numbers'  => array(
+							'label'       => 'Numbers shown on the site',
+							'description' => 'Type {years}, {reviews} or {response_hours} in any text to show these.',
+							'fields'      => array(
+								'years'          => array( 'label' => 'Years in business', 'default' => '10+', 'half' => true ),
+								'reviews'        => array( 'label' => 'Number of reviews', 'default' => '50', 'half' => true ),
+								'response_hours' => array( 'label' => 'Reply time (hours)', 'default' => '24', 'half' => true ),
+							),
+						),
+						'form'     => array(
+							'label'  => 'Contact form',
+							'fields' => array(
+								'form_services' => array( 'type' => 'lines', 'label' => 'Services in the form menu', 'default' => array( 'Service one', 'Service two', 'Something else' ) ),
+								'form_email'    => array( 'type' => 'email', 'label' => 'Send form messages to', 'help' => 'Leave empty to use the website administrator email.' ),
+							),
+						),
+						'social'   => array(
+							'label'  => 'Social profiles',
+							'fields' => array(
+								'facebook'  => array( 'type' => 'url', 'label' => 'Facebook', 'clearable' => true, 'help' => 'Leave empty to hide the icon.' ),
+								'instagram' => array( 'type' => 'url', 'label' => 'Instagram', 'clearable' => true ),
+								'linkedin'  => array( 'type' => 'url', 'label' => 'LinkedIn', 'clearable' => true ),
+								'google'    => array( 'type' => 'url', 'label' => 'Google Business profile', 'clearable' => true ),
+							),
 						),
 					),
-					'contact'  => array(
-						'label'  => 'Contact',
-						'fields' => array(
-							'phone'  => array( 'label' => 'Phone', 'default' => '(555) 010-0000', 'half' => true ),
-							'email'  => array( 'type' => 'email', 'label' => 'Email', 'default' => 'hello@example.com', 'half' => true ),
-							'street' => array( 'label' => 'Street address', 'clearable' => true ),
-							'city'   => array( 'label' => 'City', 'half' => true, 'clearable' => true ),
-							'region' => array( 'label' => 'State', 'half' => true, 'clearable' => true ),
-							'zip'    => array( 'label' => 'ZIP code', 'half' => true, 'clearable' => true ),
-							'hours'  => array( 'type' => 'lines', 'label' => 'Opening hours', 'help' => 'One line each, e.g. Mon to Fri: 8am to 6pm. Leave empty to hide.' ),
-						),
-					),
-					'numbers'  => array(
-						'label'       => 'Numbers shown on the site',
-						'description' => 'Type {years}, {reviews} or {response_hours} in any text to show these.',
-						'fields'      => array(
-							'years'          => array( 'label' => 'Years in business', 'default' => '10+', 'half' => true ),
-							'reviews'        => array( 'label' => 'Number of reviews', 'default' => '50', 'half' => true ),
-							'response_hours' => array( 'label' => 'Reply time (hours)', 'default' => '24', 'half' => true ),
-						),
-					),
-					'form'     => array(
-						'label'  => 'Contact form',
-						'fields' => array(
-							'form_services' => array( 'type' => 'lines', 'label' => 'Services in the form menu', 'default' => array( 'Service one', 'Service two', 'Something else' ) ),
-							'form_email'    => array( 'type' => 'email', 'label' => 'Send form messages to', 'help' => 'Leave empty to use the website administrator email.' ),
-						),
-					),
-					'social'   => array(
-						'label'  => 'Social profiles',
-						'fields' => array(
-							'facebook'  => array( 'type' => 'url', 'label' => 'Facebook', 'clearable' => true, 'help' => 'Leave empty to hide the icon.' ),
-							'instagram' => array( 'type' => 'url', 'label' => 'Instagram', 'clearable' => true ),
-							'linkedin'  => array( 'type' => 'url', 'label' => 'LinkedIn', 'clearable' => true ),
-							'google'    => array( 'type' => 'url', 'label' => 'Google Business profile', 'clearable' => true ),
-						),
-					),
-				),
+				)
 			)
 		);
 

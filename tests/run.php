@@ -209,5 +209,59 @@ $fmt = apply_filters( 'image_editor_output_format', array(), 'x.jpg', 'image/jpe
 $check( 'new JPEG uploads get WebP copies when the server supports it', wp_image_editor_supports( array( 'mime_type' => 'image/webp' ) ) ? 'image/webp' === ( $fmt['image/jpeg'] ?? '' ) : empty( $fmt['image/jpeg'] ) );
 $check( 'half-width photos ask phones for a full-width copy and desktops for under half', '(min-width: 900px) 45vw, 100vw' === es_sizes( 'half' ) );
 
+// Child themes can extend the starter without copying its files.
+add_filter( 'es_business_schema', $add_yt = fn( $n ) => $n + array( 'slogan' => 'Test slogan' ) );
+$check( 'a child theme can add business details through es_business_schema', 'Test slogan' === ( es_business_schema()['slogan'] ?? '' ) );
+remove_filter( 'es_business_schema', $add_yt );
+add_filter( 'es_settings', $set_co = function ( $s ) {
+	$s['sections']['business']['fields']['company']['default'] = 'Child Co';
+	return $s;
+} );
+do_action( 'after_setup_theme' );
+$check( 'a child theme sets Site Settings defaults through es_settings', 'Child Co' === ( elroi_settings_config()['sections']['business']['fields']['company']['default'] ?? '' ) );
+remove_filter( 'es_settings', $set_co );
+do_action( 'after_setup_theme' );
+$check( 'on the starter itself, the child folder is the starter folder', ES_CHILD_DIR === ES_DIR && ES_VERSION === es_child_version() );
+
+// Updates: a newer GitHub release with elroi-starter.zip is offered as a theme update; the same version is not.
+$fake_release = function ( $version ) {
+	return function ( $pre, $args, $url ) use ( $version ) {
+		if ( ! str_contains( $url, 'api.github.com/repos/titosoriano/elroi-starter/releases/latest' ) ) {
+			return $pre;
+		}
+		$body = array( 'tag_name' => 'v' . $version, 'body' => 'notes', 'assets' => array( array( 'name' => 'elroi-starter.zip', 'browser_download_url' => 'https://github.com/titosoriano/elroi-starter/releases/download/v' . $version . '/elroi-starter.zip' ) ) );
+		return array( 'response' => array( 'code' => 200, 'message' => 'OK' ), 'body' => wp_json_encode( $body ), 'headers' => array(), 'cookies' => array() );
+	};
+};
+foreach ( array( '99.0.0' => true, ES_VERSION => false ) as $v => $offered ) {
+	delete_site_transient( 'es_starter_release' );
+	add_filter( 'pre_http_request', $f = $fake_release( (string) $v ), 10, 3 );
+	$t = apply_filters( 'pre_set_site_transient_update_themes', (object) array( 'response' => array() ) );
+	remove_filter( 'pre_http_request', $f, 10 );
+	$got = $t->response['elroi-starter'] ?? null;
+	$check( $offered ? 'a newer release is offered as a theme update with its zip' : 'the installed version is not offered again', $offered ? ( '99.0.0' === ( $got['new_version'] ?? '' ) && str_ends_with( $got['package'] ?? '', '/v99.0.0/elroi-starter.zip' ) ) : null === $got, $got );
+}
+delete_site_transient( 'es_starter_release' );
+
+// Backups: Site Health and es_backup_status() flag a site without recent off-site backups.
+$b = es_backup_status();
+$check( 'without a backup plugin, Site Health recommends one', ! $b['ok'] && 'recommended' === es_backup_health_test()['status'] && isset( apply_filters( 'site_status_tests', array( 'direct' => array() ) )['direct']['es_backups'] ) );
+if ( ! class_exists( 'UpdraftPlus' ) ) {
+	eval( 'class UpdraftPlus {}' ); // phpcs:ignore Squiz.PHP.Eval -- stand-in for the plugin in this test only.
+}
+update_option( 'updraft_last_backup', array( 'success' => 1, 'backup_time' => time() - HOUR_IN_SECONDS ) );
+update_option( 'updraft_service', array( 'googledrive' ) );
+update_option( 'updraft_retain', 1 );
+$b = es_backup_status();
+$check( 'a fresh Google Drive backup that keeps only one copy is flagged for keeping more', ! $b['ok'] && 1 === count( $b['problems'] ) && str_contains( $b['problems'][0], 'at least 7' ), $b );
+update_option( 'updraft_retain', 7 );
+$check( 'a fresh off-site backup keeping 7 copies passes', es_backup_status()['ok'] && 'good' === es_backup_health_test()['status'] );
+update_option( 'updraft_last_backup', array( 'success' => 1, 'backup_time' => time() - 20 * DAY_IN_SECONDS ) );
+update_option( 'updraft_service', array( 'none' ) );
+$check( 'an old backup kept only on the server is flagged twice', 2 === count( es_backup_status()['problems'] ) );
+foreach ( array( 'updraft_last_backup', 'updraft_service', 'updraft_retain' ) as $o ) {
+	delete_option( $o );
+}
+
 $failed = array_values( array_filter( $results, fn( $r ) => ! $r['ok'] ) );
 echo wp_json_encode( array( 'passed' => count( $results ) - count( $failed ), 'failed' => count( $failed ), 'fails' => $failed ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );

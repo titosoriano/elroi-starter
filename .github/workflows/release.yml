@@ -1,0 +1,50 @@
+# Publishes a release with elroi-starter.zip attached whenever the Version in style.css changes on
+# main (or when run by hand from the Actions tab). Sites running the starter then show
+# "New version available" (inc/updater.php). Nothing to drag into GitHub by hand.
+name: Release
+on:
+  push:
+    branches: [main]
+    paths: [style.css]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: release
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: elroi-starter
+      - name: Read version
+        id: v
+        working-directory: elroi-starter
+        run: |
+          V=$(sed -n 's/^Version: *//p' style.css | tr -d ' \r')
+          grep -q "ES_VERSION', '$V'" functions.php || { echo "::error::ES_VERSION in functions.php does not match Version $V in style.css"; exit 1; }
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          if gh release view "v$V" --json assets -q '.assets[].name' 2>/dev/null | grep -qx elroi-starter.zip; then echo "done=1" >> "$GITHUB_OUTPUT"; fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Build zip (PHP lint, motion libraries checked against SHA256SUMS)
+        if: steps.v.outputs.done != '1'
+        working-directory: elroi-starter
+        run: |
+          errors=$(find . -name '*.php' -not -path './dist/*' -exec php -l {} \; | grep -v 'No syntax' || true)
+          [ -z "$errors" ] || { echo "$errors"; exit 1; }
+          sh bin/build.sh --with-motion
+          unzip -l dist/elroi-starter.zip | grep -q 'elroi-starter/assets/vendor/gsap.min.js'
+          unzip -l dist/elroi-starter.zip | grep -q 'elroi-starter/style.css'
+      - name: Publish release
+        if: steps.v.outputs.done != '1'
+        working-directory: elroi-starter
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ steps.v.outputs.version }}
+        run: |
+          if gh release view "v$V" >/dev/null 2>&1; then
+            gh release upload "v$V" dist/elroi-starter.zip --clobber
+          else
+            gh release create "v$V" dist/elroi-starter.zip --target "$GITHUB_SHA" --title "v$V" --generate-notes
+          fi

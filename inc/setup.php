@@ -28,9 +28,17 @@ add_action(
 add_action(
 	'wp_enqueue_scripts',
 	function () {
-		wp_enqueue_style( 'es-tokens', ES_URI . '/assets/css/tokens.css', array(), ES_VERSION );
-		wp_enqueue_style( 'es-site', ES_URI . '/assets/css/site.css', array( 'es-tokens' ), ES_VERSION );
-		wp_enqueue_script( 'es-site', ES_URI . '/assets/js/site.js', array(), ES_VERSION, array( 'strategy' => 'defer', 'in_footer' => true ) );
+		// A child theme that brings its whole design declares add_theme_support( 'es-own-design' )
+		// and enqueues its own files; otherwise the child's tokens.css (brand) replaces the starter's,
+		// and its assets/css/client.css loads after the starter's layout.
+		if ( ! current_theme_supports( 'es-own-design' ) ) {
+			wp_enqueue_style( 'es-tokens', get_theme_file_uri( 'assets/css/tokens.css' ), array(), es_child_version() );
+			wp_enqueue_style( 'es-site', ES_URI . '/assets/css/site.css', array( 'es-tokens' ), ES_VERSION );
+			wp_enqueue_script( 'es-site', ES_URI . '/assets/js/site.js', array(), ES_VERSION, array( 'strategy' => 'defer', 'in_footer' => true ) );
+			if ( is_child_theme() && file_exists( ES_CHILD_DIR . '/assets/css/client.css' ) ) {
+				wp_enqueue_style( 'es-client', ES_CHILD_URI . '/assets/css/client.css', array( 'es-site' ), es_child_version() );
+			}
+		}
 		// Designed pages are not block content: skip the block library CSS there.
 		if ( ! is_singular( 'post' ) ) {
 			wp_dequeue_style( 'wp-block-library' );
@@ -39,6 +47,36 @@ add_action(
 		}
 	},
 	20
+);
+
+/**
+ * Version of the active (child) theme, for cache busting the child's own files.
+ */
+function es_child_version() {
+	return is_child_theme() ? ES_VERSION . '-' . wp_get_theme()->get( 'Version' ) : ES_VERSION;
+}
+
+/*
+ * In a child theme, the starter's page templates the client does not use stay out of the
+ * Template menu: add_theme_support( 'es-parent-templates', array( 'templates/contact.php' ) )
+ * keeps only the listed ones (an empty array hides them all). Without it, all of them show.
+ * A template file in the child always shows (it replaces the starter's).
+ */
+add_filter(
+	'theme_page_templates',
+	function ( $templates ) {
+		if ( ! is_child_theme() || ! current_theme_supports( 'es-parent-templates' ) ) {
+			return $templates;
+		}
+		$support = get_theme_support( 'es-parent-templates' );
+		$keep    = is_array( $support ) && is_array( $support[0] ?? null ) ? $support[0] : array();
+		foreach ( array_keys( $templates ) as $file ) {
+			if ( ! file_exists( ES_CHILD_DIR . '/' . $file ) && ! in_array( $file, $keep, true ) ) {
+				unset( $templates[ $file ] );
+			}
+		}
+		return $templates;
+	}
 );
 
 // Quieter <head>.
