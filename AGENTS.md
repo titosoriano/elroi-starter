@@ -97,7 +97,7 @@ ES_WP_USER=... ES_WP_PASS=... python3 tests/seo_scores.py --site https://client.
 
 ## Verify
 
-**On GitHub, on every push and pull request:** `.github/workflows/checks.yml` lints the PHP and runs `tests/run.php` on a fresh WordPress Playground with the plugin's main branch; the run summary lists any failed check. Releases run the same checks first. Client child themes get the same workflow from `bin/new-client.sh`. Keep every repository green, and add a check for every rule the user cares about.
+**On GitHub, on every push and pull request:** `.github/workflows/checks.yml` lints the PHP and runs `tests/run.php` on a fresh WordPress Playground with the plugin's main branch; the run summary lists any failed check. Releases run the same checks first. Client child themes get the same workflow from `bin/new-client.sh`. Keep every repository green, and add a check for every rule the user cares about. The tests load pages over HTTP from inside Playground, so the workflows pin `--workers=3`: private repositories get 2-core runners, where Playground's default is one worker and the run deadlocks until the job timeout.
 
 
 Local, on WordPress Playground (Node 22; Playground fails on Node 26), with the plugin checked out next to this repo:
