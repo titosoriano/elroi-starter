@@ -1,0 +1,3 @@
+OpenDyslexic (opendyslexic-400.woff) by Abbie Gonzalez, https://opendyslexic.org/
+Licensed under the SIL Open Font License, Version 1.1: https://openfontlicense.org/
+Used by the accessibility preferences panel (assets/css/a11y.css) for its "Dyslexia font" option.

@@ -25,7 +25,8 @@
 	'use strict';
 
 	var cfg = window.ESMotionConfig || { smooth: true, duration: 1.15 };
-	var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	// The accessibility panel's "Stop animations" (es-a11y-motion on <html>) counts as reduced motion.
+	var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('es-a11y-motion');
 	var gsap = window.gsap;
 	var ST = window.ScrollTrigger;
 	var ok = !reduced && !!gsap && !!ST;

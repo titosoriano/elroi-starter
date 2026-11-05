@@ -572,5 +572,57 @@ update_post_meta( $em_one->ID, '_elroi_content', wp_slash( wp_json_encode( $em_c
 $check( 'embed: a widget from a site that is not allowed never prints', ! str_contains( $render( get_permalink( $em_one ) ), 'class="es-section es-embed"' ) );
 update_post_meta( $em_one->ID, '_elroi_content', wp_slash( $em_raw ) );
 
+// Menus: three levels show labels in the dropdown; with es-mega-menu they open a mega panel.
+$mn_menu = wp_create_nav_menu( 'Mega test ' . wp_generate_password( 4, false ) );
+$mn_item = function ( $title, $parent = 0, $url = '#', $desc = '' ) use ( $mn_menu ) {
+	return wp_update_nav_menu_item( $mn_menu, 0, array( 'menu-item-title' => $title, 'menu-item-url' => $url, 'menu-item-type' => 'custom', 'menu-item-status' => 'publish', 'menu-item-parent-id' => $parent, 'menu-item-description' => $desc ) );
+};
+$mn_top  = $mn_item( 'Services', 0, home_url( '/services/' ), 'Everything we build.' );
+$mn_g1   = $mn_item( 'Residential', $mn_top );
+$mn_item( 'Kitchens', $mn_g1, home_url( '/kitchens/' ), 'Cabinets, counters and layout.' );
+$mn_item( 'Baths', $mn_g1, home_url( '/baths/' ) );
+$mn_g2   = $mn_item( 'Commercial', $mn_top );
+$mn_item( 'Retail', $mn_g2, home_url( '/retail/' ) );
+$mn_top2 = $mn_item( 'Areas' );
+$mn_g3   = $mn_item( 'Bergen County', $mn_top2 );
+for ( $i = 1; $i <= 14; $i++ ) {
+	$mn_item( "Town $i", $mn_g3, home_url( "/town-$i/" ) );
+}
+$mn_locs = get_theme_mod( 'nav_menu_locations' );
+set_theme_mod( 'nav_menu_locations', array_merge( (array) $mn_locs, array( 'primary' => $mn_menu ) ) );
+ob_start();
+es_render_nav();
+$mn_plain = ob_get_clean();
+$check( 'menu: without the mega menu, a third level shows its parent as a label in the dropdown', str_contains( $mn_plain, '<li class="es-nav__label">Residential</li>' ) && str_contains( $mn_plain, '>Kitchens</a>' ) && ! str_contains( $mn_plain, 'es-mega' ), $mn_plain );
+add_theme_support( 'es-mega-menu' );
+ob_start();
+es_render_nav();
+$mn_mega = ob_get_clean();
+$check( 'menu: es-mega-menu turns a three-level item into a mega panel with columns, intro and preview', str_contains( $mn_mega, 'data-es-mega' ) && str_contains( $mn_mega, '<p class="es-mega__label">Residential</p>' ) && str_contains( $mn_mega, '<p class="es-mega__lede">Everything we build.</p>' ) && str_contains( $mn_mega, 'data-desc="Cabinets, counters and layout."' ) && str_contains( $mn_mega, 'data-es-preview-pane' ) && str_contains( $mn_mega, '>All services</a>' ), $mn_mega );
+$check( 'menu: a column of more than 11 links makes a dense panel without a preview', (bool) preg_match( '#<div class="es-mega es-mega--dense" id="es-sub-1" hidden data-es-panel>(?:(?!data-es-preview-pane).)*</div></div></li>#s', $mn_mega ) && str_contains( $mn_mega, 'style="--es-span:2"' ) );
+$check( 'menu: the button controls its panel', str_contains( $mn_mega, 'aria-controls="es-sub-0"' ) && str_contains( $mn_mega, 'id="es-sub-0" hidden data-es-panel' ) );
+ob_start();
+es_render_drawer();
+$mn_drawer = ob_get_clean();
+$check( 'menu: the mobile menu shows group labels and puts long groups in two columns', str_contains( $mn_drawer, '<p class="es-drawer__label">Bergen County</p><ul class="es-drawer__cols">' ) && str_contains( $mn_drawer, '>Kitchens</a>' ), $mn_drawer );
+remove_theme_support( 'es-mega-menu' );
+set_theme_mod( 'nav_menu_locations', $mn_locs );
+wp_delete_nav_menu( $mn_menu );
+
+// Accessibility panel: off by default; with es-a11y-panel, the full panel.
+$check( 'a11y panel: off unless the theme opts in', ! es_a11y_on() && ! str_contains( $render( home_url( '/' ) ), 'data-es-a11y' ) );
+add_theme_support( 'es-a11y-panel' );
+ob_start();
+get_template_part( 'parts/a11y' );
+$a11y_html = ob_get_clean();
+$check( 'a11y panel: button, dialog, 5 profiles, 9 color modes, text sizes and the page structure dialog', str_contains( $a11y_html, 'aria-controls="es-a11y-panel"' ) && 5 === substr_count( $a11y_html, 'data-es-a11y-profile=' ) && 9 === substr_count( $a11y_html, 'data-es-a11y-color=' ) && 4 === substr_count( $a11y_html, 'data-es-a11y-text=' ) && str_contains( $a11y_html, '<dialog class="es-a11y-struct"' ) && str_contains( $a11y_html, 'id="es-cb-protan"' ) );
+preg_match_all( '/data-es-a11y-opt="([a-z]+)"/', $a11y_html, $a11y_keys );
+preg_match_all( '/class="([^"]+)"/', $a11y_html, $a11y_cls );
+$a11y_bad = array_intersect( preg_split( '/\s+/', implode( ' ', $a11y_cls[1] ) ), array_map( fn( $k ) => 'es-a11y-' . $k, $a11y_keys[1] ) );
+$check( 'a11y panel: no element class equals a preference class (es-a11y-<key> goes on <html> and would restyle that element)', count( $a11y_keys[1] ) >= 15 && ! $a11y_bad, $a11y_bad );
+$check( 'a11y panel: its styles print inline with the theme\'s', in_array( 'es-a11y', es_inline_styles(), true ) );
+$check( 'a11y panel: no statement link without an "accessibility" page', '' === es_a11y_statement_url() && ! str_contains( $a11y_html, 'Accessibility statement</a>' ) );
+remove_theme_support( 'es-a11y-panel' );
+
 $failed = array_values( array_filter( $results, fn( $r ) => ! $r['ok'] ) );
 echo wp_json_encode( array( 'passed' => count( $results ) - count( $failed ), 'failed' => count( $failed ), 'fails' => $failed ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );

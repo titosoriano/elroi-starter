@@ -3,31 +3,64 @@
 	'use strict';
 	document.documentElement.classList.add('es-js');
 
-	// Dropdowns: click or Enter/Space to open, Escape or click outside to close.
+	// Dropdowns and mega panels: click or Enter/Space to open, Escape or click outside to close.
+	// Mega panels also open on hover (with a short delay, so passing over the bar opens nothing).
 	var drops = document.querySelectorAll('[data-es-dropdown]');
+	var hover = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+	function panelOf(d) { return d.querySelector('[data-es-panel]'); }
+	function setOpen(d, open) {
+		d.querySelector('button').setAttribute('aria-expanded', String(open));
+		panelOf(d).hidden = !open;
+	}
 	function closeAll(except) {
-		drops.forEach(function (d) {
-			if (d === except) return;
-			var b = d.querySelector('button');
-			b.setAttribute('aria-expanded', 'false');
-			d.querySelector('ul').hidden = true;
-		});
+		drops.forEach(function (d) { if (d !== except) setOpen(d, false); });
 	}
 	drops.forEach(function (d) {
 		var b = d.querySelector('button');
-		var ul = d.querySelector('ul');
+		var timer = null;
 		b.addEventListener('click', function () {
 			var open = b.getAttribute('aria-expanded') === 'true';
 			closeAll(d);
-			b.setAttribute('aria-expanded', String(!open));
-			ul.hidden = open;
+			setOpen(d, !open);
 		});
 		d.addEventListener('keydown', function (e) {
 			if (e.key === 'Escape') { closeAll(); b.focus(); }
 		});
 		d.addEventListener('focusout', function (e) {
-			if (!d.contains(e.relatedTarget)) closeAll();
+			if (!d.contains(e.relatedTarget)) setOpen(d, false);
 		});
+		if (hover && d.hasAttribute('data-es-mega')) {
+			d.addEventListener('mouseenter', function () {
+				clearTimeout(timer);
+				timer = setTimeout(function () { closeAll(d); setOpen(d, true); }, 120);
+			});
+			d.addEventListener('mouseleave', function () {
+				clearTimeout(timer);
+				timer = setTimeout(function () { setOpen(d, false); }, 250);
+			});
+		}
+		// Mega preview: the photo, name and description of the link under the pointer or focus.
+		var pane = d.querySelector('[data-es-preview-pane]');
+		if (pane) {
+			d.querySelectorAll('[data-es-preview]').forEach(function (a) {
+				function show() {
+					var plate = pane.querySelector('.es-mega__plate');
+					var src = a.getAttribute('data-src');
+					var img = plate.querySelector('img');
+					if (src) {
+						if (!img) { img = document.createElement('img'); img.alt = ''; img.decoding = 'async'; plate.appendChild(img); }
+						if (img.getAttribute('src') !== src) img.src = src;
+						plate.classList.remove('is-empty');
+					} else {
+						plate.classList.add('is-empty');
+					}
+					pane.querySelector('[data-es-ptitle]').textContent = a.getAttribute('data-title');
+					pane.querySelector('[data-es-pdesc]').textContent = a.getAttribute('data-desc');
+				}
+				a.addEventListener('mouseenter', show);
+				a.addEventListener('focus', show);
+			});
+		}
 	});
 	document.addEventListener('click', function (e) {
 		if (!e.target.closest('[data-es-dropdown]')) closeAll();

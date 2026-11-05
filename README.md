@@ -28,6 +28,8 @@ A lean, hand-coded WordPress theme made to work with [ElRoi Site Editor](https:/
 - **More than one office:** extra offices in Site Settings show in the footer and in the business markup.
 - **Widgets without code:** a service page can show a manufacturer color tool, map or booking calendar from an allowed site, sized to grow with its width.
 - **Analytics key events:** calls, emails, WhatsApp, estimate buttons and sent forms go to Google Analytics when Site Kit is connected.
+- **Mega menu (optional):** services or towns in a full-width panel with photo previews, built from the WordPress menu.
+- **Accessibility preferences (optional):** an in-house panel with text size, dyslexia font, color modes, reading guide, read aloud and more. No third-party overlay.
 - **In-text links:** list each key page and the words for it in Site Settings, and natural mentions in page and blog text link to it (5 a page at most, never in headings).
 - **Rank Math scores in seconds:** `tests/rank-math/score.js` runs Rank Math's own analyzer on an export from `wp es seo-papers`, with no browser or password, and fails any page under 80.
 - **Freshness and Service schema:** service pages describe the service, its provider and area in structured data, and pages show when they were last updated.

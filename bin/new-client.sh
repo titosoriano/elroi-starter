@@ -72,6 +72,8 @@ add_action(
 		// Preload the self-hosted fonts the first screen uses (the same files tokens.css names), and
 		// connect early to a third-party host the page needs (see the starter's AGENTS.md > Speed):
 		// add_theme_support( 'es-preload', array( 'fonts' => array( 'assets/fonts/body-400.woff2' ), 'hosts' => array() ) );
+		// add_theme_support( 'es-mega-menu' );   // many services or towns: full-width menu panels
+		// add_theme_support( 'es-a11y-panel' );  // accessibility preferences panel (agree it with the client first)
 	},
 	11
 );

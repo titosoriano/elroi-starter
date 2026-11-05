@@ -257,3 +257,27 @@ body.es-locked { overflow: hidden; }
 .es-hero__stars { color: #f5b400; letter-spacing: .1em; }
 .es-hero--photo .es-hero__rating a { color: #fff; }
 .es-footer__label--office { margin-top: 1.5rem; }
+
+/* Mega menu (add_theme_support( 'es-mega-menu' )), third-level labels. */
+.es-nav > li.es-nav__has--mega { position: static; }
+.es-mega { position: absolute; left: 0; right: 0; top: 100%; max-height: calc(100vh - 5rem); overflow-y: auto; background: #fff; border-top: 1px solid var(--es-line); border-bottom: 1px solid var(--es-line); box-shadow: 0 24px 48px rgba(16, 33, 43, .14); }
+.es-mega__inner { display: grid; grid-template-columns: minmax(11rem, 15rem) 1fr minmax(13rem, 17rem); gap: 2rem; padding-top: 2rem; padding-bottom: 2rem; }
+.es-mega--dense .es-mega__inner { grid-template-columns: minmax(11rem, 15rem) 1fr; }
+.es-mega__lede { margin: 0 0 1rem; font-size: .9375rem; color: var(--es-ink-soft); }
+.es-mega__all { font-weight: 600; }
+.es-mega__groups { display: grid; grid-template-columns: repeat(var(--es-cols, 1), minmax(0, 1fr)); gap: 1.5rem; align-content: start; }
+.es-mega__group { grid-column: span var(--es-span, 1); }
+.es-mega__label, .es-nav__label, .es-drawer__label { margin: 0 0 .5rem; font-size: .75rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--es-ink-soft); }
+.es-mega ul { margin: 0; padding: 0; list-style: none; }
+.es-mega--dense .es-mega__group ul { columns: var(--es-span, 1); column-gap: 1.5rem; }
+.es-mega__group a { display: block; padding: .35rem 0; text-decoration: none; }
+.es-mega__group a:hover, .es-mega__group a[aria-current] { text-decoration: underline; }
+.es-mega--dense .es-mega__group a { padding: .2rem 0; font-size: .9375rem; }
+.es-mega__plate { aspect-ratio: 4 / 3; overflow: hidden; border-radius: calc(var(--es-radius) * 2); background: var(--es-accent-soft); }
+.es-mega__plate img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.es-mega__plate.is-empty img { display: none; }
+.es-mega__ptitle { margin: .75rem 0 .25rem; font-weight: 700; }
+.es-mega__pdesc { margin: 0; font-size: .9375rem; color: var(--es-ink-soft); }
+.es-nav__label { padding: .6rem .75rem .1rem; margin: 0; }
+.es-drawer__label { margin: .5rem 0 .25rem 1rem; }
+.es-drawer__cols { columns: 2; column-gap: 1rem; }

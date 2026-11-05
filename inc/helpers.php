@@ -39,6 +39,7 @@ function es_icon( $name, $size = 20 ) {
 		'menu'    => '<path d="M4 7h16M4 12h16M4 17h16"/>',
 		'close'   => '<path d="M6 6l12 12M18 6 6 18"/>',
 		'chevron' => '<path d="m6 9 6 6 6-6"/>',
+		'access'  => '<circle cx="12" cy="4.5" r="1.8"/><path d="M4.5 8.5L12 10l7.5-1.5M12 10v4.5M12 14.5L8.5 21M12 14.5l3.5 6.5"/>',
 		'star'    => '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
 	);
 	return sprintf(

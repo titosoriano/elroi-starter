@@ -1,0 +1,192 @@
+/* Accessibility preferences panel (parts/a11y.php, add_theme_support( 'es-a11y-panel' )). Ported from Nuvista. */
+.es-a11y { position: fixed; left: 20px; bottom: 20px; z-index: 70; font-family: var(--es-font-body); }
+.es-a11y__sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.es-a11y__toggle {
+	display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; cursor: pointer;
+	background: var(--es-ink); color: #fff; border: 2px solid #fff;
+	box-shadow: 0 10px 26px -12px rgba(6, 42, 58, 0.7);
+	transition: background-color 0.2s, color 0.2s;
+}
+.es-a11y__toggle:hover, .es-a11y__toggle[aria-expanded="true"] { background: var(--es-accent); color: var(--es-ink); }
+.es-a11y__panel {
+	position: absolute; left: 0; bottom: 64px; width: min(400px, calc(100vw - 32px));
+	max-height: calc(100vh - 120px); overflow-y: auto;
+	background: #fff; color: var(--es-ink); border: 1px solid var(--es-line); border-radius: 4px;
+	box-shadow: 0 30px 60px -30px rgba(6, 42, 58, 0.55); padding: 18px 18px 14px;
+}
+.es-a11y__panel[hidden] { display: none; }
+.es-a11y__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.es-a11y__title { font-family: var(--es-font-head); font-weight: 700; font-size: 1.35rem; text-transform: uppercase; letter-spacing: 0.03em; line-height: 1.1; }
+.es-a11y__close { display: grid; place-items: center; width: 44px; height: 44px; margin: -8px -8px -8px 0; border: 0; background: none; cursor: pointer; color: var(--es-ink); }
+.es-a11y__group { border: 0; padding: 0; margin: 0 0 18px; }
+.es-a11y__label { font-family: var(--es-font-body); font-size: 0.78rem; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--es-ink-soft); margin-bottom: 8px; padding: 0; }
+.es-a11y__sizes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.es-a11y__sizes button {
+	min-height: 44px; border: 1px solid var(--es-line); border-radius: 2px; background: #fff; color: var(--es-ink);
+	font-weight: 600; font-size: 0.95rem; cursor: pointer;
+}
+.es-a11y__sizes button[aria-pressed="true"] { background: var(--es-ink); border-color: var(--es-ink); color: #fff; }
+.es-a11y__sizes + .es-a11y__tiles { margin-top: 6px; }
+:where(.es-a11y, .es-a11y-struct) :where(ul, h2, h3, p) { margin: 0; }
+:where(.es-a11y, .es-a11y-struct) :where(ul) { padding: 0; list-style: none; }
+.es-a11y__tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.es-a11y__tile {
+	position: relative; display: grid; align-content: start; gap: 2px; width: 100%; height: 100%; min-height: 60px;
+	padding: 10px 30px 10px 12px; border: 1px solid var(--es-line); border-radius: 2px; background: #fff; color: var(--es-ink);
+	text-align: left; cursor: pointer;
+}
+.es-a11y__tiles--color .es-a11y__tile { min-height: 48px; align-content: center; }
+.es-a11y__tile:hover { border-color: var(--es-ink); }
+.es-a11y__tile[aria-pressed="true"] { border-color: var(--es-ink); background: var(--es-accent-soft); box-shadow: inset 0 0 0 1px var(--es-ink); }
+.es-a11y__tile::after {
+	content: ""; position: absolute; top: 10px; right: 10px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--es-ink-soft);
+}
+.es-a11y__tile[aria-pressed="true"]::after { border-color: var(--es-ink); background: var(--es-ink); box-shadow: inset 0 0 0 2px #fff; }
+.es-a11y__tile:disabled { opacity: 0.55; cursor: not-allowed; }
+.es-a11y__opt-name { font-weight: 600; font-size: 0.92rem; line-height: 1.25; }
+.es-a11y__opt-desc { font-size: 0.8rem; line-height: 1.3; color: var(--es-ink-soft); }
+.es-a11y__struct-open {
+	width: 100%; min-height: 44px; margin-top: 6px; padding: 8px 12px; border: 1px solid var(--es-ink); border-radius: 2px;
+	background: #fff; color: var(--es-ink); font-weight: 600; font-size: 0.92rem; text-align: left; cursor: pointer;
+}
+.es-a11y__struct-open:hover { background: var(--es-accent-soft); }
+.es-a11y__foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
+.es-a11y__reset { min-height: 44px; padding: 0 16px; border: 1px solid var(--es-ink); border-radius: 2px; background: none; color: var(--es-ink); font-weight: 600; cursor: pointer; }
+.es-a11y__foot a { font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.es-a11y__note { margin-top: 10px; font-size: 0.82rem; color: var(--es-ink-soft); }
+
+/* Page structure dialog */
+.es-a11y-struct {
+	width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 64px); padding: 18px 20px; overflow-y: auto;
+	border: 1px solid var(--es-line); border-radius: 4px; background: #fff; color: var(--es-ink); font-family: var(--es-font-body);
+	box-shadow: 0 30px 60px -30px rgba(6, 42, 58, 0.55);
+}
+.es-a11y-struct::backdrop { background: rgba(6, 42, 58, 0.55); }
+.es-a11y-struct details { border-top: 1px solid var(--es-line); }
+.es-a11y-struct summary { min-height: 44px; display: flex; align-items: center; font-weight: 600; cursor: pointer; }
+.es-a11y-struct ul { display: grid; gap: 2px; padding-bottom: 12px; }
+.es-a11y-struct li button {
+	display: block; width: 100%; min-height: 36px; padding: 6px 8px; border: 0; border-radius: 2px; background: none;
+	color: var(--es-ink); font-size: 0.92rem; text-align: left; cursor: pointer;
+}
+.es-a11y-struct li button:hover { background: var(--es-accent-soft); }
+.es-a11y-struct li button span { font-family: var(--es-font-body); font-size: 0.72rem; letter-spacing: 0.1em; color: var(--es-ink-soft); margin-right: 8px; }
+
+/* Reading guide and the shared tooltip (text magnifier, image descriptions) */
+.es-a11y-guidebar {
+	display: none; position: fixed; left: 0; right: 0; top: 0; z-index: 90; height: 12px; pointer-events: none;
+	background: var(--es-ink); border-block: 3px solid var(--es-accent); transform: translateY(-100px);
+}
+html.es-a11y-guide .es-a11y-guidebar { display: block; }
+.es-a11y-tip {
+	display: none; position: fixed; z-index: 91; max-width: min(520px, calc(100vw - 32px)); padding: 12px 16px; pointer-events: none;
+	background: var(--es-ink); color: #FFFFFF; border: 2px solid var(--es-accent); border-radius: 4px;
+	font-family: var(--es-font-body); font-size: 1rem; line-height: 1.4; box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.6);
+}
+.es-a11y-tip.is-on { display: block; }
+.es-a11y-tip.is-big { font-size: 1.9rem; line-height: 1.25; font-weight: 600; }
+@media (max-width: 720px) {
+	.es-a11y { left: 12px; bottom: 12px; }
+	.es-a11y__panel { max-height: calc(100svh - 100px); }
+}
+body.es-locked .es-a11y { display: none; }
+@media print { .es-a11y { display: none; } }
+
+/* Preference: text size (all type is set in rem, so the root size scales the page) */
+html.es-a11y-text-125 { font-size: 125%; }
+html.es-a11y-text-150 { font-size: 150%; }
+html.es-a11y-text-200 { font-size: 200%; }
+html[class*="es-a11y-text-"] .es-a11y { font-size: 16px; }
+
+/* Preference: high contrast (darker muted text, solid borders, darker image overlays) */
+html.es-a11y-color-contrast {
+	--es-ink-soft: var(--es-ink);
+	--es-line: var(--es-ink);
+}
+html.es-a11y-color-contrast body img:not([src*="logo"]):not([src*="cert"]):not([src*="mark"]) { filter: contrast(1.1) brightness(0.92); }
+
+/* Preference: color modes (one at a time). Filters on the root element do not break position: fixed. */
+html.es-a11y-color-dark { filter: invert(1) hue-rotate(180deg); background: #FFFFFF; }
+html.es-a11y-color-dark :is(img, video, picture img, iframe) { filter: invert(1) hue-rotate(180deg); }
+html.es-a11y-color-light body *:not(img):not(video):not(svg):not(svg *),
+html.es-a11y-color-light body *::before, html.es-a11y-color-light body *::after {
+	background-color: #FFFFFF !important; background-image: none !important; color: #000000 !important; border-color: #000000 !important; text-shadow: none !important;
+}
+html.es-a11y-color-light body { background: #FFFFFF; }
+html.es-a11y-color-light body svg { color: #000000; }
+html.es-a11y-color-hsat { filter: saturate(2); }
+html.es-a11y-color-lsat { filter: saturate(0.4); }
+html.es-a11y-color-mono { filter: grayscale(1); }
+html.es-a11y-color-protan { filter: url(#es-cb-protan); }
+html.es-a11y-color-deutan { filter: url(#es-cb-deutan); }
+html.es-a11y-color-tritan { filter: url(#es-cb-tritan); }
+
+/* Preference: highlight links (underline plus a yellow mark that reads on light and dark grounds) */
+html.es-a11y-links body a:not(.es-brand) {
+	text-decoration: underline !important; text-underline-offset: 3px; text-decoration-thickness: 2px;
+	background-color: #FFF176 !important; color: var(--es-ink) !important; outline: 1px solid var(--es-ink);
+}
+
+/* Preference: highlight headings */
+html.es-a11y-titles body :is(h1, h2, h3, h4, h5, h6):not(.es-a11y__title):not(.es-a11y__label) { outline: 3px solid var(--es-accent); outline-offset: 4px; }
+
+/* Preference: readable font and dyslexia font (the dyslexia font wins if both are on) */
+@font-face {
+	font-family: "OpenDyslexic";
+	src: url("../fonts/opendyslexic-400.woff") format("woff");
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+html.es-a11y-readable body *:not(svg):not(svg *) { font-family: Verdana, Arial, Helvetica, sans-serif !important; letter-spacing: normal; }
+html.es-a11y-dyslexic body *:not(svg):not(svg *) { font-family: "OpenDyslexic", Verdana, Arial, sans-serif !important; letter-spacing: normal; }
+
+/* Preference: bold text */
+html.es-a11y-bold body :where(p, li, dd, dt, td, th, a, span, label, button, input, textarea, select, blockquote, summary) { font-weight: 700 !important; }
+
+/* Preference: line height */
+html.es-a11y-lineheight body :where(p, li, dd, dt, td, th, a, span, label, blockquote, summary, h1, h2, h3, h4, h5, h6) { line-height: 2 !important; }
+html.es-a11y-lineheight .es-a11y * { line-height: 1.3 !important; }
+
+/* Preference: big cursor */
+html.es-a11y-cursor, html.es-a11y-cursor * {
+	cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24'%3E%3Cpath d='M4 2l15 11-6.5 1 4 7-3 1.5-4-7L4 20z' fill='%23000000' stroke='%23FFFFFF' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E") 4 2, auto !important;
+}
+html.es-a11y-cursor :is(a, button, summary, label, select, [role="button"]), html.es-a11y-cursor :is(a, button, summary, label, select, [role="button"]) * {
+	cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24'%3E%3Cpath d='M9 11V4.5a1.5 1.5 0 0 1 3 0V10l5.2.9a2 2 0 0 1 1.6 2.3L18 19a3 3 0 0 1-3 2.5h-3.5a3 3 0 0 1-2.4-1.2L5 15a1.6 1.6 0 0 1 2.3-2.2z' fill='%23000000' stroke='%23FFFFFF' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E") 18 4, pointer !important;
+}
+
+/* Preference: hide images (logos and the a11y icons stay) */
+html.es-a11y-noimg body :is(img, video, picture):not(.es-brand__logo) { visibility: hidden !important; }
+
+/* Preference: text spacing at the WCAG 1.4.12 values */
+html.es-a11y-spacing body :where(p, li, dd, a, span, label, button, input, textarea, select, h1, h2, h3, h4, blockquote) {
+	line-height: 1.5 !important; letter-spacing: 0.12em !important; word-spacing: 0.16em !important;
+}
+html.es-a11y-spacing body p { margin-bottom: 2em; }
+html.es-a11y-spacing .es-a11y * { letter-spacing: normal !important; word-spacing: normal !important; }
+
+/* Preference: stop animations (mirrors prefers-reduced-motion) */
+html.es-a11y-motion { scroll-behavior: auto; }
+html.es-a11y-motion body *, html.es-a11y-motion body *::before, html.es-a11y-motion body *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+html.es-a11y-motion [data-es-reveal] { clip-path: none !important; transform: none !important; opacity: 1 !important; }
+
+/* Preference: strong focus outline */
+html.es-a11y-focus body :focus-visible, html.es-a11y-focus body :focus { outline: 4px solid var(--es-ink) !important; outline-offset: 2px !important; box-shadow: 0 0 0 7px #FFFFFF, 0 0 0 10px var(--es-accent) !important; }
+
+
+/* Let enlarged text reflow within its column. */
+html[class*="es-a11y-text-"] :is(main, footer) * { min-width: 0; overflow-wrap: break-word; }
+/* Enlarged text: the header uses the phone menu wherever the full bar would not fit. */
+html:is(.es-a11y-text-150, .es-a11y-text-200) :is(.es-header__nav, .es-header__phone span),
+html.es-a11y-text-125 :is(.es-header__nav, .es-header__phone span) { display: none; }
+html:is(.es-a11y-text-150, .es-a11y-text-200) .es-header__menu,
+html.es-a11y-text-125 .es-header__menu { display: inline-flex; }
+@media (min-width: 1400px) {
+	html.es-a11y-text-125 .es-header__nav { display: block; }
+	html.es-a11y-text-125 .es-header__menu { display: none; }
+}
+html[class*="es-a11y-text-"] .es-header__cta { white-space: nowrap; }
+@media (max-width: 520px) { html:is(.es-a11y-text-150, .es-a11y-text-200) .es-header__cta { display: none; } }
+html[class*="es-a11y-text-"] .es-btn { white-space: normal; text-align: center; }
+html[class*="es-a11y-text-"] :is(.es-hero__grid, .es-section__grid, .es-about__grid, .es-faq__grid, .es-footer__grid) { grid-template-columns: minmax(0, 1fr); }
