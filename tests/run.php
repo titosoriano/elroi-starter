@@ -326,5 +326,56 @@ $check( 'speed: without LiteSpeed, page caching rules or Google Fonts there is n
 remove_filter( 'es_speed_htaccess_file', $no_ht );
 $check( 'speed: the starter pages load no motion libraries and no Google Fonts', ! str_contains( $render( home_url( '/' ) ), 'gsap.min.js' ) && ! str_contains( $render( home_url( '/' ) ), 'fonts.googleapis.com' ) );
 
+// First paint: the theme's stylesheets print inline, minified, with absolute url()s; preloads.
+$home_html = $render( home_url( '/' ) );
+$check( 'first paint: tokens.css and site.css print inline, not as files', str_contains( $home_html, '<style id="es-tokens-inline-file">' ) && str_contains( $home_html, '<style id="es-site-inline-file">' ) && ! preg_match( '#<link[^>]+/assets/css/(tokens|site)\.css#', $home_html ), substr( $home_html, 0, 3000 ) );
+preg_match( '#<style id="es-site-inline-file">(.*?)</style>#s', $home_html, $es_m );
+$check( 'first paint: the inline CSS has no comments or indentation', isset( $es_m[1] ) && '' !== trim( $es_m[1] ) && ! str_contains( $es_m[1], '/*' ) && ! preg_match( '/^[ \t]+/m', $es_m[1] ) );
+$check( 'first paint: relative url()s become absolute, without ?ver', 'http://x.test/wp-content/themes/t/assets/fonts/a.woff2' === es_css_resolve( '../fonts/a.woff2', 'http://x.test/wp-content/themes/t/assets/css/site.css?ver=1' ) && 'http://x.test/wp-content/themes/t/assets/css/img/b.svg' === es_css_resolve( './img/b.svg', 'http://x.test/wp-content/themes/t/assets/css/site.css' ) );
+$es_tmp = ES_DIR . '/assets/css/es-test-inline.css';
+file_put_contents( $es_tmp, "/* note */\n@font-face {\n\tsrc: url('../fonts/x.woff2') format('woff2');\n}\n.a { background: url(data:image/png;base64,AAA) , url(\"/root.png\"), url(https://cdn.test/y.png); }\n" );
+$es_css = es_inline_css( ES_URI . '/assets/css/es-test-inline.css?ver=9' );
+$check( 'first paint: font URLs resolve to the theme folder; data:, root and remote URLs are kept', is_string( $es_css ) && str_contains( $es_css, 'url("' . ES_URI . '/assets/fonts/x.woff2")' ) && str_contains( $es_css, 'url(data:image/png;base64,AAA)' ) && str_contains( $es_css, 'url("/root.png")' ) && str_contains( $es_css, 'url(https://cdn.test/y.png)' ) && ! str_contains( $es_css, 'note' ), $es_css );
+file_put_contents( $es_tmp, '.a{}</style><script>x</script>' );
+$check( 'first paint: CSS that could close the <style> element stays a file', null === es_inline_css( ES_URI . '/assets/css/es-test-inline.css?ver=10' ) );
+unlink( $es_tmp );
+$es_link = "<link rel='stylesheet' id='x-css' href='" . ES_URI . "/assets/css/site.css?ver=1' media='all' />\n";
+$check( 'first paint: other handles and remote stylesheets stay links', $es_link === apply_filters( 'style_loader_tag', $es_link, 'some-plugin', ES_URI . '/assets/css/site.css?ver=1', 'all' ) && $es_link === apply_filters( 'style_loader_tag', $es_link, 'es-site', 'https://cdn.test/site.css', 'all' ) );
+add_filter( 'es_inline_styles', '__return_empty_array' );
+$check( 'first paint: es_inline_styles can turn inlining off', $es_link === apply_filters( 'style_loader_tag', $es_link, 'es-site', ES_URI . '/assets/css/site.css?ver=1', 'all' ) );
+remove_filter( 'es_inline_styles', '__return_empty_array' );
+add_filter( 'es_inline_max_bytes', $es_small = fn() => 10 );
+$check( 'first paint: stylesheets over the size limit stay links', $es_link === apply_filters( 'style_loader_tag', $es_link, 'es-site', ES_URI . '/assets/css/site.css?ver=1', 'all' ) );
+remove_filter( 'es_inline_max_bytes', $es_small );
+$check( 'first paint: a print stylesheet keeps its media', str_contains( (string) apply_filters( 'style_loader_tag', $es_link, 'es-site', ES_URI . '/assets/css/site.css?ver=1', 'print' ), '<style id="es-site-inline-file" media="print">' ) );
+
+add_theme_support( 'es-preload', array( 'fonts' => array( 'assets/fonts/test.woff2' ), 'hosts' => array( 'https://cdn.example.com' ) ) );
+ob_start();
+es_print_preloads();
+$es_pre = ob_get_clean();
+$check( 'preload: es-preload fonts print as font preloads with crossorigin, from the theme folder', str_contains( $es_pre, '<link rel="preload" href="' . get_theme_file_uri( 'assets/fonts/test.woff2' ) . '" as="font" type="font/woff2" crossorigin>' ), $es_pre );
+$es_hints = apply_filters( 'wp_resource_hints', array(), 'preconnect' );
+$check( 'preload: es-preload hosts get a preconnect', in_array( array( 'href' => 'https://cdn.example.com', 'crossorigin' ), $es_hints, true ), $es_hints );
+remove_theme_support( 'es-preload' );
+ob_start();
+es_print_preloads();
+$check( 'preload: nothing prints without es-preload or es_preload links', '' === ob_get_clean() );
+
+// Site icon stays PNG; share images use the original upload instead of a WebP copy.
+$es_up  = wp_upload_dir();
+$es_png = $es_up['basedir'] . '/es-test-share.png';
+file_put_contents( $es_png, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAAEUlEQVR42mP8z8DwnwEIGGEAAB0TAgFJ6bVsAAAAAElFTkSuQmCC' ) );
+$es_att = wp_insert_attachment( array( 'post_mime_type' => 'image/png', 'post_title' => 'es-test-share', 'post_status' => 'inherit' ), $es_png );
+update_option( 'site_icon', $es_att );
+$es_fmt_icon  = apply_filters( 'image_editor_output_format', array(), $es_up['basedir'] . '/es-test-share-180x180.png', 'image/png' );
+$es_fmt_photo = apply_filters( 'image_editor_output_format', array(), $es_up['basedir'] . '/photo.jpg', 'image/jpeg' );
+$check( 'webp: the site icon\'s sizes stay PNG (iOS ignores WebP touch icons); other photos still convert', empty( $es_fmt_icon['image/png'] ) && ( ! wp_image_editor_supports( array( 'mime_type' => 'image/webp' ) ) || 'image/webp' === ( $es_fmt_photo['image/jpeg'] ?? '' ) ), array( $es_fmt_icon, $es_fmt_photo ) );
+delete_option( 'site_icon' );
+$es_share = apply_filters( 'rank_math/opengraph/facebook/image_array', array( 'id' => $es_att, 'url' => $es_up['baseurl'] . '/es-test-share-1200x630.webp', 'width' => 1200, 'height' => 630, 'type' => 'image/webp' ) );
+$check( 'webp: share images point to the original PNG/JPEG with its real size and type', wp_get_attachment_url( $es_att ) === $es_share['url'] && 'image/png' === $es_share['type'] && 2 === $es_share['width'] && 1 === $es_share['height'], $es_share );
+$es_jpg = array( 'id' => $es_att, 'url' => $es_up['baseurl'] . '/photo.jpg', 'type' => 'image/jpeg' );
+$check( 'webp: share images that are not WebP are left alone', $es_jpg === apply_filters( 'rank_math/opengraph/twitter/image_array', $es_jpg ) );
+wp_delete_attachment( $es_att, true );
+
 $failed = array_values( array_filter( $results, fn( $r ) => ! $r['ok'] ) );
 echo wp_json_encode( array( 'passed' => count( $results ) - count( $failed ), 'failed' => count( $failed ), 'fails' => $failed ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );

@@ -69,6 +69,9 @@ add_action(
 		// animation libraries only on pages that use them (see the starter's AGENTS.md > Motion).
 		// Hide starter page templates this site does not use, e.g. keep only the contact template:
 		// add_theme_support( 'es-parent-templates', array( 'templates/contact.php' ) );
+		// Preload the self-hosted fonts the first screen uses (the same files tokens.css names), and
+		// connect early to a third-party host the page needs (see the starter's AGENTS.md > Speed):
+		// add_theme_support( 'es-preload', array( 'fonts' => array( 'assets/fonts/body-400.woff2' ), 'hosts' => array() ) );
 	},
 	11
 );
