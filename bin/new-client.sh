@@ -12,7 +12,20 @@ SLUG="$1"; NAME="$2"; DEST="${3:-..}/$SLUG"
 echo "$SLUG" | grep -Eq '^[a-z0-9-]+$' || { echo "Folder slug: lowercase letters, numbers and dashes only."; exit 1; }
 [ ! -e "$DEST" ] || { echo "$DEST already exists."; exit 1; }
 PREFIX=$(echo "$SLUG" | tr '-' '_')
-mkdir -p "$DEST/assets/css" "$DEST/assets/fonts" "$DEST/inc" "$DEST/templates" "$DEST/bin"
+mkdir -p "$DEST/assets/css" "$DEST/assets/fonts" "$DEST/inc" "$DEST/templates" "$DEST/bin" "$DEST/tests" "$DEST/.github/workflows"
+cp bin/child/tests/setup.php bin/child/tests/run.php tests/login.php "$DEST/tests/"
+sed "s/__SLUG__/$SLUG/g" bin/child/checks.yml > "$DEST/.github/workflows/checks.yml"
+cat > "$DEST/tests/blueprint.json" <<JSON
+{
+	"\$schema": "https://playground.wordpress.net/blueprint-schema.json",
+	"preferredVersions": { "php": "8.3", "wp": "latest" },
+	"steps": [
+		{ "step": "activatePlugin", "pluginPath": "elroi-site-editor/elroi-site-editor.php" },
+		{ "step": "activateTheme", "themeFolderName": "$SLUG" },
+		{ "step": "runPHP", "code": "<?php require '/wordpress/wp-load.php'; require '/wordpress/es-tests/setup.php'; flush_rewrite_rules();" }
+	]
+}
+JSON
 cp assets/css/tokens.css "$DEST/assets/css/tokens.css"
 cp screenshot.png "$DEST/screenshot.png"
 cp LICENSE "$DEST/LICENSE"
@@ -52,7 +65,8 @@ add_action(
 	'after_setup_theme',
 	function () {
 		add_theme_support( 'custom-logo' );
-		// Cinematic sites: add_theme_support( 'es-motion' ); (see the starter's AGENTS.md > Motion).
+		// Cinematic sites: add_theme_support( 'es-motion', array( 'load' => 'auto' ) ); loads the
+		// animation libraries only on pages that use them (see the starter's AGENTS.md > Motion).
 		// Hide starter page templates this site does not use, e.g. keep only the contact template:
 		// add_theme_support( 'es-parent-templates', array( 'templates/contact.php' ) );
 	},
@@ -130,6 +144,19 @@ plugin. Read the starter's AGENTS.md first: its rules, fields, SEO and motion ap
   starter must already be installed (Appearance > Themes shows it as the parent).
 - Before a big change on the live site: check \`es_backup_status()\` (or Tools > Site Health) and take
   a fresh UpdraftPlus backup; try redesigns on the host's staging copy first.
+- Every push runs \`.github/workflows/checks.yml\` (PHP lint and \`tests/run.php\` on WordPress
+  Playground with the latest plugin and starter). Deploy only commits with a green check; add a
+  check to \`tests/run.php\` for every rule the client cares about. Locally (Node 22), with
+  \`elroi-site-editor\` and \`elroi-starter\` checked out next to this folder:
+  \`npx -y @wp-playground/cli@3.1.56 server --port=9403 --login --blueprint=tests/blueprint.json
+  --mount="../elroi-site-editor:/wordpress/wp-content/plugins/elroi-site-editor"
+  --mount="../elroi-starter:/wordpress/wp-content/themes/elroi-starter"
+  --mount="\$PWD:/wordpress/wp-content/themes/$SLUG" --mount="\$PWD/tests:/wordpress/es-tests"\`,
+  then open http://127.0.0.1:9403/es-tests/run.php.
+- On a new WordPress site, first check ElRoi Site Editor's recommended plugins (Plugins > ElRoi
+  recommended, or the \`elroi/recommended-plugins\` ability) and tell the user which are missing.
+- Speed: Tools > Site Health > "Speed settings" applies the LiteSpeed Cache settings that keep the
+  animations working (\`es_speed_status()\` / \`es_speed_apply()\` through the site's MCP).
 
 ## Client
 

@@ -23,6 +23,9 @@ A lean, hand-coded WordPress theme made to work with [ElRoi Site Editor](https:/
 - **Lighter photos:** WebP copies for new uploads and the right photo size for each screen.
 - **Updates itself:** client sites run the starter as the parent theme and get its improvements as a normal theme update.
 - **Backup check:** Tools > Site Health warns when there is no recent off-site backup.
+- **Speed settings that keep the animations working:** Tools > Site Health > Speed settings sets LiteSpeed Cache safely in one click (cache on, minify on; JS delay, combine, unused-CSS and LiteSpeed lazy load off), keeps pages fresh in visitors' browsers, and reports Google Fonts added by plugins.
+- **Animations only where used:** with `'load' => 'auto'`, pages without effects load none of the motion libraries.
+- **Automatic checks:** every push runs the tests on GitHub; releases run them first. New client themes get the same checks.
 
 ![Service page](docs/service.png)
 
@@ -30,13 +33,13 @@ A lean, hand-coded WordPress theme made to work with [ElRoi Site Editor](https:/
 
 1. Run `sh bin/new-client.sh acme-website "Acme Roofing"`. It creates a **child theme** of the starter for the client; push it to a private repository.
 2. Brand it in the child's `assets/css/tokens.css`, then design and register the client's pages (see [`AGENTS.md`](AGENTS.md)).
-3. On the client's WordPress: install [ElRoi Site Editor](https://github.com/titosoriano/elroi-site-editor/releases/latest) and [ElRoi Starter](https://github.com/titosoriano/elroi-starter/releases/latest) (`elroi-starter.zip`), then upload and activate the child theme.
+3. On the client's WordPress: install [ElRoi Site Editor](https://github.com/titosoriano/elroi-site-editor/releases/latest) and [ElRoi Starter](https://github.com/titosoriano/elroi-starter/releases/latest) (`elroi-starter.zip`), then upload and activate the child theme. ElRoi Site Editor lists the other plugins every site needs under Plugins > ElRoi recommended.
 
 Starter improvements reach every client as a normal theme update ("New version available" for ElRoi Starter); the client's own design in the child theme is never touched.
 
 ## Releases
 
-Bump the version in `style.css` and `functions.php`, push to `main`, and the Release workflow builds `elroi-starter.zip` and attaches it to a new GitHub release. Sites pick it up from there.
+Bump the version in `style.css` and `functions.php`, push to `main`, and the Release workflow runs the checks, then builds `elroi-starter.zip` and attaches it to a new GitHub release. Sites pick it up from there.
 
 ## Requirements
 

@@ -263,5 +263,68 @@ foreach ( array( 'updraft_last_backup', 'updraft_service', 'updraft_retain' ) as
 	delete_option( $o );
 }
 
+// Motion layer, auto mode: the libraries load only on pages that use a motion hook.
+$check( 'motion: plain add_theme_support keeps loading on every page (older child themes)', ( function () {
+	add_theme_support( 'es-motion' );
+	$o = es_motion_options();
+	remove_theme_support( 'es-motion' );
+	return 'always' === $o['load'];
+} )() );
+$check( 'motion: starter hooks and child markers are found, look-alike attributes are not', es_motion_html_uses( '<h2 data-es-split="0.2">x</h2>', es_motion_markers( array( 'markers' => array() ) ) ) && es_motion_html_uses( '<div class="a" data-reveal>x</div>', array( 'data-reveal' ) ) && ! es_motion_html_uses( '<div data-revealed="1" data-es-notice>x</div>', es_motion_markers( array( 'markers' => array( 'data-reveal' ) ) ) ) && ! es_motion_html_uses( '<p>data-es-split in text</p>', es_motion_markers( array( 'markers' => array() ) ) ) );
+add_theme_support( 'es-motion', array( 'load' => 'auto', 'markers' => array( 'data-reveal' ) ) );
+$motion_reset = function () {
+	foreach ( array( 'es-gsap', 'es-scrolltrigger', 'es-lenis', 'es-motion', 'es-test-scene' ) as $h ) {
+		wp_dequeue_script( $h );
+		wp_deregister_script( $h );
+	}
+	wp_dequeue_style( 'es-motion' );
+	wp_deregister_style( 'es-motion' );
+	es_motion_register( es_motion_options() );
+	wp_register_script( 'es-test-scene', 'https://example.com/scene.js', array( 'es-motion' ), '1', array( 'in_footer' => true ) );
+};
+$motion_reset();
+$used = es_motion_decide( '<main><h1>Plain page</h1></main>' );
+$stub = wp_scripts()->registered['es-motion'] ?? null;
+$check( 'motion: a page without hooks loads none of the libraries, and ESMotion is a stand-in', ! $used && $stub && false === $stub->src && array() === $stub->deps && str_contains( implode( '', (array) $stub->extra['after'] ), 'scene:function(){}' ) && ! wp_script_is( 'es-gsap', 'enqueued' ) && ! wp_style_is( 'es-motion', 'enqueued' ) );
+$motion_reset();
+$used = es_motion_decide( '<main><h1 data-reveal>Animated page</h1></main>' );
+$check( 'motion: a page with a child marker loads the libraries', $used && wp_script_is( 'es-motion', 'enqueued' ) && str_ends_with( wp_scripts()->registered['es-motion']->src, '/assets/js/motion.js' ) && wp_style_is( 'es-motion', 'enqueued' ) );
+
+// LiteSpeed must leave the motion scripts (and scripts built on them) alone.
+$tag  = fn( $h ) => apply_filters( 'script_loader_tag', '<script src="https://example.com/' . $h . '.js" id="' . $h . '-js" defer data-wp-strategy="defer"></script>', $h, '' );
+$check( 'speed: motion scripts are never delayed by LiteSpeed; libraries are not minified again', str_contains( $tag( 'es-gsap' ), '<script data-no-defer="1" data-no-optimize="1" src=' ) && str_contains( $tag( 'es-test-scene' ), 'data-no-defer="1"' ) && ! str_contains( $tag( 'es-test-scene' ), 'data-no-optimize' ) && ! str_contains( $tag( 'es-site' ), 'data-no-' ), array( $tag( 'es-gsap' ), $tag( 'es-test-scene' ) ) );
+remove_theme_support( 'es-motion' );
+
+// Speed check: .htaccess that keeps pages in browsers, LiteSpeed settings, Google Fonts.
+require_once ABSPATH . 'wp-admin/includes/file.php';
+$ht = wp_tempnam( 'es-htaccess' );
+file_put_contents( $ht, "# BEGIN WordPress\n<IfModule mod_expires.c>\nExpiresActive On\nExpiresByType image/png \"access plus 1 year\"\nExpiresDefault \"access plus 1 weeks\"\n</IfModule>\n# END WordPress\n" );
+$before = es_speed_html_cached( $ht );
+es_speed_fix_html_cache( $ht );
+$check( 'speed: a one-week ExpiresDefault is found and the fix keeps pages fresh', $before && ! es_speed_html_cached( $ht ) && str_contains( file_get_contents( $ht ), 'ExpiresByType text/html "access plus 0 seconds"' ) && str_contains( file_get_contents( $ht ), 'ExpiresDefault' ) );
+file_put_contents( $ht, "# ExpiresDefault \"access plus 1 weeks\"\nRewriteEngine On\n" );
+$check( 'speed: a commented-out ExpiresDefault is not a problem', ! es_speed_html_cached( $ht ) );
+unlink( $ht );
+add_filter( 'es_speed_htaccess_file', $no_ht = fn() => '/nonexistent/.htaccess' );
+add_filter( 'es_speed_litespeed_active', '__return_true' );
+update_option( 'litespeed.conf.cache', 1 );
+update_option( 'litespeed.conf.optm-js_defer', 2 );
+update_option( 'litespeed.conf.media-lazy', '' );
+update_option( 'litespeed.conf.optm-ucss', '1' );
+$diff = es_speed_litespeed_diff();
+$check( 'speed: LiteSpeed "Delayed" JS and UCSS are flagged; page cache on and lazy load off pass; unknown options are skipped', array( 'optm-ucss', 'optm-js_defer' ) === array_values( array_intersect( array( 'optm-ucss', 'optm-js_defer' ), array_keys( $diff ) ) ) && 2 === count( $diff ) && 0 === $diff['optm-js_defer'][1], $diff );
+$check( 'speed: Site Health recommends the fix with a button', 'recommended' === es_speed_health_test()['status'] && str_contains( es_speed_health_test()['actions'], 'es_speed_apply' ) && isset( apply_filters( 'site_status_tests', array( 'direct' => array() ) )['direct']['es_speed'] ) );
+foreach ( array( 'cache', 'optm-js_defer', 'media-lazy', 'optm-ucss' ) as $o ) {
+	delete_option( 'litespeed.conf.' . $o );
+}
+remove_filter( 'es_speed_litespeed_active', '__return_true' );
+update_option( 'es_speed_remote_fonts', array( 'https://fonts.googleapis.com/css2' ) );
+$s = es_speed_status();
+$check( 'speed: Google Fonts added by a plugin are reported', ! $s['ok'] && 1 === count( $s['problems'] ) && str_contains( $s['problems'][0], 'fonts.googleapis.com' ), $s );
+delete_option( 'es_speed_remote_fonts' );
+$check( 'speed: without LiteSpeed, page caching rules or Google Fonts there is nothing to fix', es_speed_status()['ok'] && 'good' === es_speed_health_test()['status'] );
+remove_filter( 'es_speed_htaccess_file', $no_ht );
+$check( 'speed: the starter pages load no motion libraries and no Google Fonts', ! str_contains( $render( home_url( '/' ) ), 'gsap.min.js' ) && ! str_contains( $render( home_url( '/' ) ), 'fonts.googleapis.com' ) );
+
 $failed = array_values( array_filter( $results, fn( $r ) => ! $r['ok'] ) );
 echo wp_json_encode( array( 'passed' => count( $results ) - count( $failed ), 'failed' => count( $failed ), 'fails' => $failed ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
