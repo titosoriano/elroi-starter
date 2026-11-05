@@ -7,7 +7,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'ES_VERSION', '1.6.0' );
+define( 'ES_VERSION', '1.6.1' );
 define( 'ES_DIR', get_template_directory() );
 define( 'ES_URI', get_template_directory_uri() );
 // In a client child theme these point at the child; on the starter itself they equal ES_DIR / ES_URI.

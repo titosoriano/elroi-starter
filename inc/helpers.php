@@ -122,3 +122,14 @@ function es_plain( $text ) {
 	}
 	return wp_strip_all_tags( html_entity_decode( function_exists( 'elroi_text' ) ? elroi_text( $text ) : (string) $text ) );
 }
+
+/**
+ * A page's full title for its <h1>: with ElRoi Site Editor 1.4+, a page's "Short name" shows in
+ * menus and breadcrumbs, while the heading keeps the whole title (the search phrase Rank Math
+ * checks). Lists, cards and breadcrumbs keep using get_the_title().
+ *
+ * @param int|WP_Post|null $post Page.
+ */
+function es_page_title( $post = null ) {
+	return function_exists( 'elroi_full_title' ) ? elroi_full_title( $post ) : get_the_title( $post );
+}

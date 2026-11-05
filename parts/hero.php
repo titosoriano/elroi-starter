@@ -25,7 +25,7 @@ $crumbs = es_breadcrumbs();
 		<?php if ( ! empty( $h['eyebrow'] ) ) : ?>
 			<p class="es-eyebrow"><?php echo elroi_text( $h['eyebrow'] ); // phpcs:ignore ?></p>
 		<?php endif; ?>
-		<h1 class="es-hero__title"><?php echo elroi_heading( ! empty( $h['h1'] ) ? $h['h1'] : get_the_title() ); // phpcs:ignore ?></h1>
+		<h1 class="es-hero__title"><?php echo elroi_heading( ! empty( $h['h1'] ) ? $h['h1'] : es_page_title() ); // phpcs:ignore ?></h1>
 		<?php if ( ! empty( $h['lede'] ) ) : ?>
 			<p class="es-hero__lede"><?php echo elroi_text( $h['lede'] ); // phpcs:ignore ?></p>
 		<?php endif; ?>

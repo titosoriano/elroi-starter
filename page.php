@@ -10,7 +10,7 @@ get_header();
 the_post();
 ?>
 <main id="main" class="es-main">
-	<header class="es-hero es-hero--inner"><div class="es-container es-hero__inner"><h1 class="es-hero__title"><?php the_title(); ?></h1></div></header>
+	<header class="es-hero es-hero--inner"><div class="es-container es-hero__inner"><h1 class="es-hero__title"><?php echo es_page_title(); // phpcs:ignore WordPress.Security.EscapeOutput -- core title filters ?></h1></div></header>
 	<div class="es-container es-prose"><?php the_content(); ?></div>
 </main>
 <?php

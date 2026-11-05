@@ -11,7 +11,7 @@ get_header();
 <main id="main" class="es-main">
 	<header class="es-hero es-hero--inner">
 		<div class="es-container es-hero__inner">
-			<h1 class="es-hero__title"><?php echo esc_html( is_home() && get_option( 'page_for_posts' ) ? get_the_title( get_option( 'page_for_posts' ) ) : wp_strip_all_tags( get_the_archive_title() ) ); ?></h1>
+			<h1 class="es-hero__title"><?php echo esc_html( is_home() && get_option( 'page_for_posts' ) ? es_page_title( get_option( 'page_for_posts' ) ) : wp_strip_all_tags( get_the_archive_title() ) ); ?></h1>
 		</div>
 	</header>
 	<div class="es-container es-section">

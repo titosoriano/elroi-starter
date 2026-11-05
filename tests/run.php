@@ -326,6 +326,17 @@ $check( 'speed: without LiteSpeed, page caching rules or Google Fonts there is n
 remove_filter( 'es_speed_htaccess_file', $no_ht );
 $check( 'speed: the starter pages load no motion libraries and no Google Fonts', ! str_contains( $render( home_url( '/' ) ), 'gsap.min.js' ) && ! str_contains( $render( home_url( '/' ) ), 'fonts.googleapis.com' ) );
 
+// Short name (ElRoi Site Editor 1.4+): breadcrumbs show it, the h1 keeps the full title.
+if ( function_exists( 'elroi_full_title' ) ) {
+	$sn_id = get_page_by_path( 'about' )->ID;
+	update_post_meta( $sn_id, '_elroi_short_name', 'About' );
+	wp_update_post( array( 'ID' => $sn_id, 'post_title' => 'About Our Remodeling Company' ) );
+	$sn_html = $render( get_permalink( $sn_id ) );
+	$check( 'short name: the h1 keeps the full title, the breadcrumb shows the short name', (bool) preg_match( '#<h1[^>]*>About Our Remodeling Company</h1>#', $sn_html ) && str_contains( $sn_html, '<span aria-current="page">About</span>' ), substr( $sn_html, (int) strpos( $sn_html, 'es-crumbs' ), 600 ) );
+	delete_post_meta( $sn_id, '_elroi_short_name' );
+	wp_update_post( array( 'ID' => $sn_id, 'post_title' => 'About' ) );
+}
+
 // First paint: the theme's stylesheets print inline, minified, with absolute url()s; preloads.
 $home_html = $render( home_url( '/' ) );
 $check( 'first paint: tokens.css and site.css print inline, not as files', str_contains( $home_html, '<style id="es-tokens-inline-file">' ) && str_contains( $home_html, '<style id="es-site-inline-file">' ) && ! preg_match( '#<link[^>]+/assets/css/(tokens|site)\.css#', $home_html ), substr( $home_html, 0, 3000 ) );

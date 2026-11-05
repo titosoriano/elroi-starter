@@ -93,6 +93,7 @@ Needs ElRoi Site Editor 1.1+, which makes Rank Math score each designed page as 
 - Paragraph and FAQ answer fields use `'rich' => true` and print with `elroi_paragraphs( $list, '', true )` / `es_rich()`, so clients can add `[internal links](/page/)`. FAQ answers in the structured data use `es_plain()`.
 - Every field that labels a button or link has `'link_text' => true`; the form then warns about "Learn more"-style words.
 - Fill in Site Settings > Business, including **Towns and areas you serve** (Google's `areaServed`), and set Rank Math > Titles & Meta > Local SEO to "Organization" so the business details merge into Rank Math's own entry.
+- The page title holds the focus keyword phrase (Rank Math checks it against the title); give the page a **Short name** (ElRoi Site Editor 1.4+, sidebar box) so menus and breadcrumbs stay short. Templates print the title as an `<h1>` only through `es_page_title()`, which keeps the full phrase.
 - One focus keyword per page, never two pages on the same keyword: keep the map in the client repo (`seo/keyword-map.md`: keyword, page, pages linking to it, score). Put the keyword in the SEO title, the meta description, the H1 or first paragraph, one image's alt text, and link to the page from at least one other page.
 - Rank Math wants 600+ words per page: give designed pages a real text section (sections, FAQs) rather than padding.
 - Before handover and after content changes, run the score check: every page and post must score 80 or more.
