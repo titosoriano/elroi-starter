@@ -23,6 +23,8 @@ A lean, hand-coded WordPress theme made to work with [ElRoi Site Editor](https:/
 - **Lighter photos:** WebP copies for new uploads and the right photo size for each screen.
 - **Updates itself:** client sites run the starter as the parent theme and get its improvements as a normal theme update.
 - **Backup check:** Tools > Site Health warns when there is no recent off-site backup.
+- **Blog that fills whole rows:** a featured newest post plus 9 cards on page 1 and 12 after, so no post sits alone on a last page; reading time, updated dates and "Keep reading" on posts, credited to the business.
+- **Freshness and Service schema:** service pages describe the service, its provider and area in structured data, and pages show when they were last updated.
 - **Nothing blocks the first paint:** the theme's stylesheets print inside each page (minified, cached until the file changes) instead of as separate files, fonts the first screen uses can be preloaded, and WebP never reaches the site icon or link previews.
 - **Speed settings that keep the animations working:** Tools > Site Health > Speed settings sets LiteSpeed Cache safely in one click (cache on, minify on; JS delay, combine, unused-CSS and LiteSpeed lazy load off), keeps pages fresh in visitors' browsers, and reports Google Fonts added by plugins.
 - **Animations only where used:** with `'load' => 'auto'`, pages without effects load none of the motion libraries.

@@ -19,7 +19,7 @@ $check   = function ( $name, $ok, $info = null ) use ( &$results ) {
 
 $render = function ( $url ) {
 	$html = wp_remote_retrieve_body( wp_remote_get( $url, array( 'timeout' => 20 ) ) );
-	return preg_replace( array( '/name="es_nonce" value="[^"]+"/', '/ver=[\w.]+/' ), array( 'N', 'ver=X' ), $html );
+	return preg_replace( array( '/name="es_nonce" value="[^"]+"/', '/ver=[\w.]+/', '/("dateModified":|<p class="es-hero__updated">.*?datetime=)"[^"]+"/' ), array( 'N', 'ver=X', '$1"T"' ), $html ); // Saving a page legitimately changes its updated time.
 };
 
 /**
@@ -336,6 +336,49 @@ if ( function_exists( 'elroi_full_title' ) ) {
 	delete_post_meta( $sn_id, '_elroi_short_name' );
 	wp_update_post( array( 'ID' => $sn_id, 'post_title' => 'About' ) );
 }
+
+// Blog: whole grid rows (feature + 9 on page 1, 12 after), reading time, related posts, credits.
+$bl_cat   = wp_insert_term( 'Kitchens test', 'category' );
+$bl_cat   = is_wp_error( $bl_cat ) ? (int) $bl_cat->get_error_data( 'term_exists' ) : (int) $bl_cat['term_id'];
+$bl_ids   = array();
+$bl_total = (int) wp_count_posts()->publish;
+for ( $i = $bl_total; $i < 22; $i++ ) {
+	$bl_ids[] = wp_insert_post( array( 'post_status' => 'publish', 'post_title' => "Blog test $i", 'post_content' => '<p>' . str_repeat( 'word ', 700 ) . '</p>', 'post_date' => gmdate( 'Y-m-d H:i:s', strtotime( "-$i days" ) ), 'post_category' => $i < 6 ? array( $bl_cat ) : array() ) );
+}
+$bl_blog = get_permalink( get_option( 'page_for_posts' ) );
+$bl_p1   = $render( $bl_blog );
+$bl_p2   = $render( trailingslashit( $bl_blog ) . 'page/2/' );
+$bl_p3   = wp_remote_retrieve_response_code( wp_remote_get( trailingslashit( $bl_blog ) . 'page/3/', array( 'timeout' => 20 ) ) );
+$check( 'blog: page 1 is the newest post as a feature plus 9 cards', 1 === substr_count( $bl_p1, '<li class="es-card es-card--feature">' ) && 10 === substr_count( $bl_p1, '<li class="es-card' ), substr_count( $bl_p1, '<li class="es-card' ) );
+$check( 'blog: page 2 holds the remaining 12 posts and nothing is left for a page 3', 12 === substr_count( $bl_p2, '<li class="es-card' ) && ! str_contains( $bl_p2, '<li class="es-card es-card--feature">' ) && 404 === $bl_p3 && ! str_contains( $bl_p2, '/page/3/' ), array( substr_count( $bl_p2, '<li class="es-card' ), $bl_p3 ) );
+$check( 'blog: page 1 links to page 2 and no further', str_contains( $bl_p1, '/page/2/' ) && ! str_contains( $bl_p1, '/page/3/' ) );
+$check( 'blog: cards show the reading time', str_contains( $bl_p1, '3 min read' ) );
+$check( 'blog: the page count follows the page sizes', 1 === es_blog_page_count( 10 ) && 2 === es_blog_page_count( 11 ) && 2 === es_blog_page_count( 22 ) && 3 === es_blog_page_count( 23 ) );
+add_filter( 'es_blog_page_sizes', '__return_false' );
+$check( 'blog: es_blog_page_sizes false gives Settings > Reading back', null === es_blog_page_sizes() && 0 === es_blog_page_count( 30 ) );
+remove_filter( 'es_blog_page_sizes', '__return_false' );
+$bl_post = $bl_ids[0];
+wp_update_post( array( 'ID' => $bl_post, 'post_date' => '2026-01-05 10:00:00', 'post_date_gmt' => '2026-01-05 10:00:00' ) );
+$bl_single = $render( get_permalink( $bl_post ) );
+$check( 'post: shows reading time and the date it was updated', str_contains( $bl_single, '3 min read' ) && str_contains( $bl_single, 'Updated <time datetime=' ), substr( $bl_single, (int) strpos( $bl_single, 'es-post__meta' ), 500 ) );
+$bl_rel = es_related_posts( $bl_post );
+$check( 'post: "Keep reading" lists 3 posts, the same category first', 3 === count( $bl_rel ) && has_category( $bl_cat, $bl_rel[0] ) && has_category( $bl_cat, $bl_rel[1] ) && ! in_array( $bl_post, wp_list_pluck( $bl_rel, 'ID' ), true ) && str_contains( $bl_single, 'id="es-related-title"' ) && 3 === substr_count( $bl_single, '<h3 class="es-card__title">' ) );
+$GLOBALS['wp_query']     = new WP_Query( array( 'p' => $bl_post ) );
+$GLOBALS['wp_the_query'] = $GLOBALS['wp_query'];
+$bl_ld = apply_filters( 'rank_math/json_ld', array( 'ProfilePage' => array( '@type' => 'Person', 'name' => 'admin' ), 'richSnippet' => array( '@type' => 'BlogPosting', 'author' => array( '@id' => 'x#author' ) ) ) );
+$check( 'post: Rank Math\'s BlogPosting credits the business, not the WordPress user', ! isset( $bl_ld['ProfilePage'] ) && home_url( '/#organization' ) === ( $bl_ld['richSnippet']['author']['@id'] ?? '' ), $bl_ld );
+wp_reset_query();
+foreach ( $bl_ids as $bl_id ) {
+	wp_delete_post( $bl_id, true );
+}
+wp_delete_term( $bl_cat, 'category' );
+
+// Service pages: Service schema; every page: WebPage with its dates and a visible "Updated" date.
+$sv_html = $render( get_permalink( get_page_by_path( 'services/service-one' ) ) );
+$check( 'service page: Service schema names the service, the business as provider and the service areas', str_contains( $sv_html, '"@type":"Service"' ) && str_contains( $sv_html, '"provider":{"@id":"' . home_url( '/#organization' ) . '"}' ) && str_contains( $sv_html, '"name":"Service one, done right."' ) && str_contains( $sv_html, '"areaServed":[{"@type":"Place","name":"Morristown, NJ"}' ), substr( $sv_html, (int) strpos( $sv_html, '"Service"' ), 600 ) );
+$check( 'pages: WebPage schema carries the published and updated dates', str_contains( $sv_html, '"@type":"WebPage"' ) && str_contains( $sv_html, '"dateModified":"' ) && str_contains( $sv_html, '"datePublished":"' ) );
+$check( 'pages: the hero shows the updated date', str_contains( $sv_html, '<p class="es-hero__updated">Updated <time datetime="' ) );
+$check( 'other pages get no Service schema', ! str_contains( $render( get_permalink( get_page_by_path( 'about' ) ) ), '"@type":"Service"' ) );
 
 // First paint: the theme's stylesheets print inline, minified, with absolute url()s; preloads.
 $home_html = $render( home_url( '/' ) );

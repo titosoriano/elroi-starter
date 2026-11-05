@@ -1,7 +1,7 @@
 <?php
 /**
  * Structured data (JSON-LD) from Site Settings and page content: the business, breadcrumbs on
- * inner pages, FAQPage wherever a page has questions, and VideoObject for every video field (inc/video.php). Titles, descriptions, Open Graph and
+ * inner pages, Service on service pages, WebPage with its dates, FAQPage wherever a page has questions, and VideoObject for every video field (inc/video.php). Titles, descriptions, Open Graph and
  * the sitemap are left to Rank Math.
  *
  * With Rank Math's Schema module on, everything goes into Rank Math's single graph: the business
@@ -122,6 +122,66 @@ function es_breadcrumb_schema() {
 }
 
 /**
+ * Page templates that describe one service (a child adds its own with `es_service_templates`).
+ *
+ * @return string[]
+ */
+function es_service_templates() {
+	return (array) apply_filters( 'es_service_templates', array( 'templates/service.php' ) );
+}
+
+/**
+ * Service node for a service page, or null: what the page offers, by whom and where. The name is
+ * the page's H1 (or full title), the type its short name, the description its introduction (or
+ * excerpt), the provider the business and the area its service areas.
+ */
+function es_service_schema() {
+	if ( ! is_page() || ! in_array( get_page_template_slug(), es_service_templates(), true ) || ! function_exists( 'elroi_content' ) ) {
+		return null;
+	}
+	$hero = (array) ( elroi_content()['hero'] ?? array() );
+	$name = es_plain( ! empty( $hero['h1'] ) ? $hero['h1'] : es_page_title() );
+	$node = array(
+		'@type'       => 'Service',
+		'@id'         => get_permalink() . '#service',
+		'name'        => wp_strip_all_tags( $name ),
+		'serviceType' => wp_strip_all_tags( get_the_title() ),
+		'description' => es_plain( ! empty( $hero['lede'] ) ? $hero['lede'] : get_the_excerpt() ),
+		'url'         => get_permalink(),
+		'provider'    => array( '@id' => home_url( '/#organization' ) ),
+	);
+	$areas = array_values( array_filter( (array) es_setting( 'service_areas' ) ) );
+	if ( $areas ) {
+		$node['areaServed'] = array_map( fn( $a ) => array( '@type' => 'Place', 'name' => $a ), $areas );
+	}
+	if ( has_post_thumbnail() ) {
+		$node['image'] = get_the_post_thumbnail_url( null, 'full' );
+	}
+	return array_filter( (array) apply_filters( 'es_service_schema', $node ) );
+}
+
+/**
+ * WebPage node with published and updated dates, for the theme's own graph (Rank Math prints its
+ * own WebPage with the same dates). Search engines and AI answers use the dates for freshness.
+ */
+function es_webpage_schema() {
+	if ( ! is_singular() ) {
+		return null;
+	}
+	$id = get_queried_object_id();
+	return array(
+		'@type'         => 'WebPage',
+		'@id'           => get_permalink( $id ) . '#webpage',
+		'url'           => get_permalink( $id ),
+		'name'          => wp_strip_all_tags( es_page_title( $id ) ),
+		'datePublished' => get_the_date( 'c', $id ),
+		'dateModified'  => get_the_modified_date( 'c', $id ),
+		'inLanguage'    => get_bloginfo( 'language' ),
+		'publisher'     => array( '@id' => home_url( '/#organization' ) ),
+	);
+}
+
+/**
  * Whether Rank Math prints the structured data (its Schema module is on).
  */
 function es_rank_math_schema() {
@@ -145,6 +205,10 @@ add_filter(
 		if ( $faq ) {
 			$data['es_faq'] = $faq;
 		}
+		$service = es_service_schema();
+		if ( $service ) {
+			$data['es_service'] = $service;
+		}
 		foreach ( es_videos_schema() as $i => $video ) {
 			$data[ 'es_video_' . $i ] = $video;
 		}
@@ -165,7 +229,7 @@ add_action(
 		if ( ! function_exists( 'elroi_content' ) || es_rank_math_schema() ) {
 			return;
 		}
-		$graph = array_values( array_filter( array_merge( array( is_front_page() ? es_business_schema() : null, es_breadcrumb_schema(), es_faq_schema() ), es_videos_schema() ) ) );
+		$graph = array_values( array_filter( array_merge( array( is_front_page() ? es_business_schema() : null, es_webpage_schema(), es_breadcrumb_schema(), es_faq_schema(), es_service_schema() ), es_videos_schema() ) ) );
 		if ( $graph ) {
 			printf( "<script type=\"application/ld+json\">%s</script>\n", wp_json_encode( array( '@context' => 'https://schema.org', '@graph' => $graph ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) );
 		}

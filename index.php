@@ -16,15 +16,15 @@ get_header();
 	</header>
 	<div class="es-container es-section">
 		<?php if ( have_posts() ) : ?>
-			<ul class="es-cards">
-				<?php while ( have_posts() ) : the_post(); ?>
-					<li class="es-card">
-						<?php if ( has_post_thumbnail() ) : ?><?php the_post_thumbnail( 'medium_large', array( 'class' => 'es-card__img', 'loading' => 'lazy', 'sizes' => es_sizes( 'card' ) ) ); ?><?php endif; ?>
-						<p class="es-eyebrow"><time datetime="<?php echo esc_attr( get_the_date( 'c' ) ); ?>"><?php echo esc_html( get_the_date() ); ?></time></p>
-						<h2 class="es-card__title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h2>
-						<p><?php echo esc_html( get_the_excerpt() ); ?></p>
-					</li>
-				<?php endwhile; ?>
+			<ul class="es-cards es-cards--posts">
+				<?php
+				$es_first = es_blog_has_feature();
+				while ( have_posts() ) :
+					the_post();
+					es_post_card( get_post(), 'h2', $es_first );
+					$es_first = false;
+				endwhile;
+				?>
 			</ul>
 			<?php the_posts_pagination( array( 'class' => 'es-pagination' ) ); ?>
 		<?php else : ?>

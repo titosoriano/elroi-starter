@@ -21,7 +21,7 @@ $check   = function ( $name, $ok, $info = null ) use ( &$results ) {
 };
 $render  = function ( $url ) {
 	$html = wp_remote_retrieve_body( wp_remote_get( $url, array( 'timeout' => 20 ) ) );
-	return preg_replace( array( '/name="es_nonce" value="[^"]+"/', '/ver=[\w.]+/' ), array( 'N', 'ver=X' ), $html );
+	return preg_replace( array( '/name="es_nonce" value="[^"]+"/', '/ver=[\w.]+/', '/("dateModified":|<p class="es-hero__updated">.*?datetime=)"[^"]+"/' ), array( 'N', 'ver=X', '$1"T"' ), $html ); // Saving a page legitimately changes its updated time.
 };
 $php_err = '/(Fatal error|Warning:|Notice:|Deprecated:|There has been a critical error)/';
 

@@ -74,6 +74,7 @@ body.es-locked { overflow: hidden; }
 .es-hero__title { font-size: clamp(2.2rem, 5vw, 3.75rem); max-width: 20ch; }
 .es-hero--inner .es-hero__title { font-size: clamp(2rem, 4.2vw, 3.1rem); }
 .es-hero__lede { font-size: 1.2rem; max-width: 40rem; }
+.es-hero__updated { margin: 1rem 0 0; font-size: .875rem; opacity: .8; }
 .es-hero__actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.75rem; }
 .es-hero__card { padding: clamp(1.25rem, 3vw, 2rem); border-radius: calc(var(--es-radius) * 2); background: #fff; color: var(--es-ink); box-shadow: 0 20px 50px rgba(16, 33, 43, .2); }
 .es-hero__card a { color: inherit; }
@@ -107,6 +108,18 @@ body.es-locked { overflow: hidden; }
 .es-card:hover { border-color: var(--es-accent); }
 .es-card__img { width: calc(100% + 3rem); max-width: none; margin: -1.5rem -1.5rem 1.25rem; aspect-ratio: 4 / 3; object-fit: cover; border-radius: calc(var(--es-radius) * 2) calc(var(--es-radius) * 2) 0 0; }
 .es-card__title { font-size: 1.3rem; }
+.es-cards--posts { grid-template-columns: 1fr; }
+@media (min-width: 600px) { .es-cards--posts { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 900px) { .es-cards--posts { grid-template-columns: repeat(3, 1fr); } }
+.es-card--feature { grid-column: 1 / -1; }
+.es-card--feature:not(:has(.es-card__img)) { display: block; }
+@media (min-width: 900px) {
+	.es-card--feature { display: grid; grid-template-columns: 1.2fr 1fr; gap: 2rem; align-items: center; }
+	.es-card--feature .es-card__img { width: calc(100% + 1.5rem); height: calc(100% + 3rem); margin: -1.5rem 0 -1.5rem -1.5rem; aspect-ratio: auto; border-radius: calc(var(--es-radius) * 2) 0 0 calc(var(--es-radius) * 2); }
+	.es-card--feature .es-card__title { font-size: clamp(1.6rem, 2.6vw, 2.1rem); }
+}
+.es-post__meta { display: flex; flex-wrap: wrap; gap: .35rem 1rem; }
+.es-related { border-top: 1px solid var(--es-line); }
 .es-card__title a { text-decoration: none; }
 .es-card__title a::after { content: ""; position: absolute; inset: 0; }
 .es-card__more { color: var(--es-accent); }

@@ -29,5 +29,8 @@ $crumbs = es_breadcrumbs();
 		<?php if ( ! empty( $h['lede'] ) ) : ?>
 			<p class="es-hero__lede"><?php echo elroi_text( $h['lede'] ); // phpcs:ignore ?></p>
 		<?php endif; ?>
+		<?php if ( is_page() && apply_filters( 'es_show_updated', true ) ) : ?>
+			<p class="es-hero__updated"><?php esc_html_e( 'Updated', 'elroi-starter' ); ?> <time datetime="<?php echo esc_attr( get_the_modified_date( 'c' ) ); ?>"><?php echo esc_html( get_the_modified_date() ); ?></time></p>
+		<?php endif; ?>
 	</div>
 </header>
