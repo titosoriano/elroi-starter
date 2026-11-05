@@ -15,6 +15,8 @@ Each client site is a **child theme** of this one, in a **private** repository n
 7. Backups: UpdraftPlus to Google Drive or Dropbox, daily, keeping at least 7 copies (Tools > Site Health checks this).
 8. Verify (below), then create the client's user with the **Editor** role.
 
+**Converting an older client site that is a full copy of the starter** (as Dead Center Media was): remove every file the starter provides from the client theme, keep only its templates, assets, fields and client-only code (moved onto starter filters), set `Template: elroi-starter` in its style.css, and test it in Playground next to the starter: every page's HTML must match the old theme's except asset paths and body classes. On the live site: backup check, install ElRoi Starter, swap the client folder in one step, then `update_option( 'template', 'elroi-starter' )` (the stylesheet and its theme mods stay the same). WordPress keeps reading the old `template` option until it changes, and without it every page fails. Check each page renders, and switch both back if not.
+
 ## Rules
 
 - **Never hard-code client copy, photos or contact facts** in templates. Register a field (with the designed copy as `default`) or use a Site Setting (`es_setting( 'phone' )`, or `{phone}` inside any text field). Fixed UI words (Menu, Send, Skip to content) may stay in code.
