@@ -10,8 +10,15 @@
 defined( 'ABSPATH' ) || exit;
 $h      = (array) ( $args['hero'] ?? array() );
 $crumbs = es_breadcrumbs();
+// "Whole photo above the text": on narrow screens the photo shows uncropped at its own shape.
+$banner = ! empty( $h['photo'] ) && 'Whole photo above the text' === ( $h['phone_photo'] ?? '' );
+$ratio  = '';
+if ( $banner && is_numeric( $h['photo'] ) ) {
+	$src   = wp_get_attachment_image_src( (int) $h['photo'], 'full' );
+	$ratio = ( $src && $src[1] && $src[2] ) ? ' style="--es-hero-ratio: ' . (int) $src[1] . ' / ' . (int) $src[2] . '"' : '';
+}
 ?>
-<header class="es-hero es-hero--inner<?php echo ! empty( $h['photo'] ) ? ' es-hero--photo' : ''; ?>">
+<header class="es-hero es-hero--inner<?php echo ! empty( $h['photo'] ) ? ' es-hero--photo' : ''; ?><?php echo $banner ? ' es-hero--banner' : ''; ?>"<?php echo $ratio; // phpcs:ignore WordPress.Security.EscapeOutput -- integers ?>>
 	<?php if ( ! empty( $h['photo'] ) ) : ?>
 		<div class="es-hero__media"><?php echo elroi_image( $h['photo'], 'full', array( 'alt' => '', 'loading' => 'eager', 'fetchpriority' => 'high', 'sizes' => es_sizes( 'full' ) ) ); // phpcs:ignore ?></div>
 	<?php endif; ?>

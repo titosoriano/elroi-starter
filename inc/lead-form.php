@@ -96,6 +96,9 @@ function es_handle_lead() {
 	if ( '' === $lead['name'] || '' === $lead['phone'] || ! is_email( $lead['email'] ) ) {
 		$done( 'missing' );
 	}
+	if ( ! es_valid_phone( $lead['phone'] ) ) {
+		$done( 'phone' );
+	}
 	if ( ! in_array( $lead['service'], (array) es_setting( 'form_services' ), true ) ) {
 		$lead['service'] = '';
 	}
@@ -224,6 +227,35 @@ function es_lead_to_highlevel( $post_id, $lead ) {
 }
 
 /**
+ * Whether a phone number looks real: only digits, spaces and + ( ) . - with 10 to 15 digits.
+ * site.js applies the same rule as the visitor types; this re-checks it on the server so bots and
+ * typos never reach the CRM.
+ *
+ * @param string $phone Phone number as typed.
+ */
+function es_valid_phone( $phone ) {
+	if ( preg_match( '/[^0-9+().\s-]/', (string) $phone ) ) {
+		return false;
+	}
+	$digits = strlen( preg_replace( '/\D/', '', (string) $phone ) );
+	return $digits >= 10 && $digits <= 15;
+}
+
+/**
+ * The line under the form: required-field note and, when the site has a privacy policy page
+ * (Settings > Privacy), a link to it.
+ */
+function es_form_fine_print() {
+	$url  = get_privacy_policy_url();
+	$text = esc_html__( '* Required. We only use your details to answer you.', 'elroi-starter' );
+	if ( $url ) {
+		/* translators: %s: link to the privacy policy. */
+		$text .= ' ' . sprintf( esc_html__( 'See our %s.', 'elroi-starter' ), '<a href="' . esc_url( $url ) . '">' . esc_html__( 'privacy policy', 'elroi-starter' ) . '</a>' );
+	}
+	return (string) apply_filters( 'es_form_fine_print', $text, $url );
+}
+
+/**
  * The form.
  *
  * @param string $title Title above the form.
@@ -234,6 +266,7 @@ function es_lead_form( $title = '', $text = '' ) {
 	$notes = array(
 		'sent'    => array( 'ok', sprintf( 'Thank you. Your message is in, and we reply within %s hours.', es_setting( 'response_hours' ) ) ),
 		'missing' => array( 'err', 'Please add your name, phone number and a valid email so we can reach you.' ),
+		'phone'   => array( 'err', 'Please check your phone number: use 10 digits, for example (555) 123-4567.' ),
 		'expired' => array( 'err', 'The form expired. Please send it again.' ),
 		'robot'   => array( 'err', 'We could not confirm you are not a robot. Please try again.' ),
 		'error'   => array( 'err', 'Something went wrong. Please call us instead.' ),
@@ -272,7 +305,7 @@ function es_lead_form( $title = '', $text = '' ) {
 		<div class="es-form__hp" aria-hidden="true"><label for="es-website">Website</label><input type="text" id="es-website" name="es_website" tabindex="-1" autocomplete="off"></div>
 		<div class="es-form__row">
 			<p class="es-field"><label for="es-name">Full name <span aria-hidden="true">*</span></label><input type="text" id="es-name" name="es_name" autocomplete="name" required></p>
-			<p class="es-field"><label for="es-phone">Phone <span aria-hidden="true">*</span></label><input type="tel" id="es-phone" name="es_phone" autocomplete="tel" required></p>
+			<p class="es-field"><label for="es-phone">Phone <span aria-hidden="true">*</span></label><input type="tel" id="es-phone" name="es_phone" autocomplete="tel" inputmode="tel" pattern="[0-9+\(\)\.\s\-]{10,25}" required data-es-phone></p>
 		</div>
 		<div class="es-form__row">
 			<p class="es-field"><label for="es-email">Email <span aria-hidden="true">*</span></label><input type="email" id="es-email" name="es_email" autocomplete="email" required></p>
@@ -286,7 +319,7 @@ function es_lead_form( $title = '', $text = '' ) {
 			<div class="cf-turnstile" data-sitekey="<?php echo esc_attr( ELROI_TURNSTILE_SITE ); ?>" data-appearance="interaction-only"></div>
 		<?php endif; ?>
 		<button class="es-btn es-btn--primary es-form__submit" type="submit">Send</button>
-		<p class="es-form__fine">* Required. We only use your details to answer you.</p>
+		<p class="es-form__fine"><?php echo es_form_fine_print(); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in es_form_fine_print() ?></p>
 	</form>
 	<?php
 }

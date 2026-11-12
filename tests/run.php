@@ -624,5 +624,58 @@ $check( 'a11y panel: its styles print inline with the theme\'s', in_array( 'es-a
 $check( 'a11y panel: no statement link without an "accessibility" page', '' === es_a11y_statement_url() && ! str_contains( $a11y_html, 'Accessibility statement</a>' ) );
 remove_theme_support( 'es-a11y-panel' );
 
+// Hardening: users hidden from visitors, XML-RPC off, browser security headers.
+wp_set_current_user( 0 );
+$hd_anon = rest_do_request( new WP_REST_Request( 'GET', '/wp/v2/users' ) )->get_status();
+wp_set_current_user( 1 );
+$hd_admin = rest_do_request( new WP_REST_Request( 'GET', '/wp/v2/users' ) )->get_status();
+$check( 'hardening: visitors cannot list user accounts; logged-in users still can', 404 === $hd_anon && 200 === $hd_admin, array( $hd_anon, $hd_admin ) );
+$check( 'hardening: XML-RPC is off and offers no methods', ! apply_filters( 'xmlrpc_enabled', true ) && array() === apply_filters( 'xmlrpc_methods', array( 'wp.getUsersBlogs' => 'x' ) ) );
+add_filter( 'es_xmlrpc', '__return_true' );
+$check( 'hardening: es_xmlrpc turns XML-RPC back on for a site that needs it', apply_filters( 'xmlrpc_enabled', true ) && array() !== apply_filters( 'xmlrpc_methods', array( 'wp.getUsersBlogs' => 'x' ) ) );
+remove_filter( 'es_xmlrpc', '__return_true' );
+$hd_head = wp_remote_retrieve_headers( wp_remote_get( home_url( '/' ), array( 'timeout' => 20 ) ) );
+$check( 'hardening: pages send nosniff, SAMEORIGIN framing and a referrer policy', 'nosniff' === ( $hd_head['x-content-type-options'] ?? '' ) && 'SAMEORIGIN' === ( $hd_head['x-frame-options'] ?? '' ) && '' !== ( $hd_head['referrer-policy'] ?? '' ), (array) $hd_head );
+$check( 'hardening: oEmbed names the business, not the account', get_bloginfo( 'name' ) === ( apply_filters( 'oembed_response_data', array( 'author_name' => 'admin', 'author_url' => 'x' ), get_post( 1 ), 600, 400 )['author_name'] ?? '' ) );
+
+// Lead form: phone numbers are checked; the fine print links the privacy policy.
+$check( 'form: es_valid_phone accepts real formats and refuses letters and short numbers', es_valid_phone( '(555) 123-4567' ) && es_valid_phone( '+1 555.123.4567' ) && ! es_valid_phone( '555-1234' ) && ! es_valid_phone( '555 CALL NOW 1234' ) && ! es_valid_phone( '' ) );
+$ph_before = count( get_posts( array( 'post_type' => 'es_lead', 'post_status' => 'private', 'numberposts' => -1, 'fields' => 'ids' ) ) );
+wp_set_current_user( 0 );
+$ph_nonce = wp_create_nonce( 'es_lead' );
+wp_set_current_user( 1 );
+$ph_res = wp_remote_post( admin_url( 'admin-post.php' ), array( 'timeout' => 20, 'redirection' => 0, 'body' => array( 'action' => 'es_lead', 'es_nonce' => $ph_nonce, 'es_name' => 'Bad Phone', 'es_phone' => '123', 'es_email' => 'bad@example.com', 'es_message' => 'x' ) ) );
+$ph_after = count( get_posts( array( 'post_type' => 'es_lead', 'post_status' => 'private', 'numberposts' => -1, 'fields' => 'ids' ) ) );
+$check( 'form: a message with a bad phone number is sent back, not stored', $ph_before === $ph_after && str_contains( (string) wp_remote_retrieve_header( $ph_res, 'location' ), 'lead=phone' ), wp_remote_retrieve_header( $ph_res, 'location' ) );
+$pp_was  = (int) get_option( 'wp_page_for_privacy_policy' );
+$pp_page = wp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Privacy Policy', 'post_name' => 'privacy-policy-test' ) );
+update_option( 'wp_page_for_privacy_policy', $pp_page );
+$check( 'form: the fine print links the privacy policy page when there is one', str_contains( es_form_fine_print(), 'href="' . esc_url( get_permalink( $pp_page ) ) . '"' ), es_form_fine_print() );
+update_option( 'wp_page_for_privacy_policy', $pp_was );
+wp_delete_post( $pp_page, true );
+
+// Hero: "Whole photo above the text" shows the photo uncropped on phones.
+require_once ABSPATH . 'wp-admin/includes/image.php';
+$hb_up  = wp_upload_dir();
+$hb_img = imagecreatetruecolor( 600, 400 );
+$hb_fn  = trailingslashit( $hb_up['path'] ) . 'es-hero-test.jpg';
+imagejpeg( $hb_img, $hb_fn );
+$hb_id = wp_insert_attachment( array( 'post_mime_type' => 'image/jpeg', 'post_title' => 'Team photo', 'post_status' => 'inherit' ), $hb_fn );
+wp_update_attachment_metadata( $hb_id, wp_generate_attachment_metadata( $hb_id, $hb_fn ) );
+update_post_meta( $hb_id, '_wp_attachment_image_alt', 'Team photo' );
+$hb_page = get_page_by_path( 'services/service-one' );
+$hb_raw  = get_post_meta( $hb_page->ID, '_elroi_content', true );
+$hb_c    = json_decode( $hb_raw, true );
+$hb_c['hero']['photo']       = $hb_id;
+$hb_c['hero']['phone_photo'] = 'Whole photo above the text';
+update_post_meta( $hb_page->ID, '_elroi_content', wp_slash( wp_json_encode( $hb_c ) ) );
+$hb_html = $render( get_permalink( $hb_page ) );
+$check( 'hero: "Whole photo above the text" marks the hero and gives it the photo\'s shape', str_contains( $hb_html, 'es-hero--banner" style="--es-hero-ratio: ' ), substr( $hb_html, (int) strpos( $hb_html, '<header class="es-hero' ), 200 ) );
+$hb_c['hero']['phone_photo'] = 'Behind the text';
+update_post_meta( $hb_page->ID, '_elroi_content', wp_slash( wp_json_encode( $hb_c ) ) );
+$check( 'hero: the default keeps the photo behind the text', ! preg_match( '/<header class="[^"]*es-hero--banner/', $render( get_permalink( $hb_page ) ) ) );
+update_post_meta( $hb_page->ID, '_elroi_content', wp_slash( $hb_raw ) );
+wp_delete_attachment( $hb_id, true );
+
 $failed = array_values( array_filter( $results, fn( $r ) => ! $r['ok'] ) );
 echo wp_json_encode( array( 'passed' => count( $results ) - count( $failed ), 'failed' => count( $failed ), 'fails' => $failed ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );

@@ -120,6 +120,17 @@
 		});
 	});
 
+	// Phone field: drop letters and other characters as they are typed (digits, spaces and
+	// + ( ) . - stay), then ask for 10 to 15 digits. es_valid_phone() checks the same on the server.
+	document.querySelectorAll('[data-es-phone]').forEach(function (input) {
+		input.addEventListener('input', function () {
+			var clean = input.value.replace(/[^0-9+().\s-]/g, '');
+			if (clean !== input.value) input.value = clean;
+			var digits = clean.replace(/\D/g, '').length;
+			input.setCustomValidity(clean && (digits < 10 || digits > 15) ? 'Please enter a phone number with 10 digits, for example (555) 123-4567.' : '');
+		});
+	});
+
 	// After sending the form, move focus to its message so screen readers announce it.
 	var notice = document.querySelector('[data-es-notice]');
 	if (notice) notice.focus();

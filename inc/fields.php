@@ -23,6 +23,13 @@ function es_hero_fields( $h1 = '' ) {
 			'h1'      => array( 'type' => 'heading', 'label' => 'Main heading (H1)', 'default' => $h1, 'help' => 'Leave empty to use the page title.' ),
 			'lede'    => array( 'type' => 'textarea', 'label' => 'Introduction' ),
 			'photo'   => array( 'type' => 'image', 'label' => 'Background photo' ),
+			'phone_photo' => array(
+				'type'    => 'select',
+				'label'   => 'Photo on phones',
+				'options' => array( 'Behind the text', 'Whole photo above the text' ),
+				'default' => 'Behind the text',
+				'help'    => 'Pick "Whole photo above the text" when every part of the picture matters, like a team photo: on phones and tablets it shows uncropped, with the heading below it.',
+			),
 		),
 	);
 }

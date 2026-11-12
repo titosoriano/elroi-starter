@@ -256,6 +256,13 @@ body.es-locked { overflow: hidden; }
 .es-hero__rating { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: 1rem 0 0; font-weight: 600; }
 .es-hero__stars { color: #f5b400; letter-spacing: .1em; }
 .es-hero--photo .es-hero__rating a { color: #fff; }
+/* "Whole photo above the text" (hero field Photo on phones): below 960px the photo shows uncropped
+   at its own shape, the text sits on the dark ground under it. */
+@media (max-width: 959px) {
+	.es-hero--banner { padding-top: 0; }
+	.es-hero--banner .es-hero__media { position: relative; inset: auto; z-index: 0; overflow: hidden; aspect-ratio: var(--es-hero-ratio, 3 / 2); margin-bottom: 1.5rem; }
+	.es-hero--banner .es-hero__media::after { inset: auto 0 0; height: 20%; background: linear-gradient(0deg, var(--es-ink), transparent); }
+}
 .es-footer__label--office { margin-top: 1.5rem; }
 
 /* Mega menu (add_theme_support( 'es-mega-menu' )), third-level labels. */

@@ -36,6 +36,10 @@ A lean, hand-coded WordPress theme made to work with [ElRoi Site Editor](https:/
 - **Nothing blocks the first paint:** the theme's stylesheets print inside each page (minified, cached until the file changes) instead of as separate files, fonts the first screen uses can be preloaded, and WebP never reaches the site icon or link previews.
 - **Speed settings that keep the animations working:** Tools > Site Health > Speed settings sets LiteSpeed Cache safely in one click (cache on, minify on; JS delay, combine, unused-CSS and LiteSpeed lazy load off), keeps pages fresh in visitors' browsers, and reports Google Fonts added by plugins.
 - **Animations only where used:** with `'load' => 'auto'`, pages without effects load none of the motion libraries.
+- **Security built in:** login names hidden from visitors, XML-RPC off, browser security headers, and a written setup for Cloudflare plus Kadence Security (one firewall, two-factor, no hidden login URL).
+- **Forms that keep the CRM clean:** phone numbers are checked as they are typed and again on the server, and the form links the privacy policy.
+- **Team photos that fit on phones:** a hero option shows the whole photo above the heading on small screens instead of cropping it behind the text.
+- **Client photos ready for the web:** `bin/photos-to-webp.py` turns a folder of phone and camera photos into small WebP files, rotated, with location data removed.
 - **Automatic checks:** every push runs the tests on GitHub; releases run them first. New client themes get the same checks.
 
 ![Service page](docs/service.png)
