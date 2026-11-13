@@ -36,6 +36,7 @@ A lean, hand-coded WordPress theme made to work with [ElRoi Site Editor](https:/
 - **Nothing blocks the first paint:** the theme's stylesheets print inside each page (minified, cached until the file changes) instead of as separate files, fonts the first screen uses can be preloaded, and WebP never reaches the site icon or link previews.
 - **Speed settings that keep the animations working:** Tools > Site Health > Speed settings sets LiteSpeed Cache safely in one click (cache on, minify on; JS delay, combine, unused-CSS and LiteSpeed lazy load off), keeps pages fresh in visitors' browsers, and reports Google Fonts added by plugins.
 - **Animations only where used:** with `'load' => 'auto'`, pages without effects load none of the motion libraries.
+- **One-command setup:** `wp es setup --name="Acme Roofing" --services="Roofing, Siding"` turns a fresh WordPress into a ready ElRoi site in about a minute: plugins, pages with templates, service area pages, menu, settings, sample content removed. Safe to run again.
 - **Security built in:** login names hidden from visitors, XML-RPC off, browser security headers, and a written setup for Cloudflare plus Kadence Security (one firewall, two-factor, no hidden login URL).
 - **Forms that keep the CRM clean:** phone numbers are checked as they are typed and again on the server, and the form links the privacy policy.
 - **Team photos that fit on phones:** a hero option shows the whole photo above the heading on small screens instead of cropping it behind the text.
@@ -48,7 +49,7 @@ A lean, hand-coded WordPress theme made to work with [ElRoi Site Editor](https:/
 
 1. Run `sh bin/new-client.sh acme-website "Acme Roofing"`. It creates a **child theme** of the starter for the client; push it to a private repository.
 2. Brand it in the child's `assets/css/tokens.css`, then design and register the client's pages (see [`AGENTS.md`](AGENTS.md)).
-3. On the client's WordPress: install [ElRoi Site Editor](https://github.com/titosoriano/elroi-site-editor/releases/latest) and [ElRoi Starter](https://github.com/titosoriano/elroi-starter/releases/latest) (`elroi-starter.zip`), then upload and activate the child theme. ElRoi Site Editor lists the other plugins every site needs under Plugins > ElRoi recommended.
+3. On the client's WordPress: install [ElRoi Starter](https://github.com/titosoriano/elroi-starter/releases/latest) (`elroi-starter.zip`), upload and activate the child theme, then run `wp es setup --name="Client Name" --services="Service one, Service two"`. It installs [ElRoi Site Editor](https://github.com/titosoriano/elroi-site-editor/releases/latest) and the recommended plugins and creates the pages, menu and settings.
 
 Starter improvements reach every client as a normal theme update ("New version available" for ElRoi Starter); the client's own design in the child theme is never touched.
 

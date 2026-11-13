@@ -677,5 +677,23 @@ $check( 'hero: the default keeps the photo behind the text', ! preg_match( '/<he
 update_post_meta( $hb_page->ID, '_elroi_content', wp_slash( $hb_raw ) );
 wp_delete_attachment( $hb_id, true );
 
+// One-command setup (wp es setup / es_site_setup): plans, creates what is missing, never doubles.
+$su_dry = es_site_setup( array( 'services' => 'Service one, Test Roofing', 'areas' => 'Test County: Test Town', 'dry_run' => true, 'index' => true ) );
+$su_txt = implode( "\n", $su_dry['done'] );
+$check( 'setup: a dry run plans the missing pages under their parents and changes nothing', str_contains( $su_txt, 'Create page "Test Roofing" (/services/test-roofing/) with templates/service.php.' ) && str_contains( $su_txt, '(/service-areas/test-county/test-town/)' ) && ! get_page_by_path( 'services/test-roofing' ), $su_dry );
+$check( 'setup: pages that exist are reused, not created again', ! str_contains( $su_txt, '"Service one"' ) && str_contains( implode( "\n", $su_dry['skipped'] ), 'Service one' ), $su_dry );
+$su_run  = es_site_setup( array( 'services' => 'Service one, Test Roofing', 'areas' => 'Test County: Test Town', 'index' => true ) );
+$su_page = get_page_by_path( 'services/test-roofing' );
+$su_town = get_page_by_path( 'service-areas/test-county/test-town' );
+$check( 'setup: it creates service and area pages with their templates', $su_page && 'templates/service.php' === get_page_template_slug( $su_page ) && $su_town && 'templates/area.php' === get_page_template_slug( $su_town ), $su_run );
+$su_again = es_site_setup( array( 'services' => 'Service one, Test Roofing', 'areas' => 'Test County: Test Town', 'index' => true ) );
+$check( 'setup: running it again creates nothing', ! preg_grep( '/^Created page/', $su_again['done'] ), $su_again['done'] );
+$check( 'setup: it never replaces an existing menu or front page', str_contains( implode( "\n", $su_again['skipped'] ), 'A main menu already exists' ) && (int) get_option( 'page_on_front' ) === (int) get_page_by_path( 'home' )->ID );
+foreach ( array( $su_town, get_page_by_path( 'service-areas/test-county' ), get_page_by_path( 'service-areas' ), $su_page ) as $su_p ) {
+	if ( $su_p ) {
+		wp_delete_post( $su_p->ID, true );
+	}
+}
+
 $failed = array_values( array_filter( $results, fn( $r ) => ! $r['ok'] ) );
 echo wp_json_encode( array( 'passed' => count( $results ) - count( $failed ), 'failed' => count( $failed ), 'fails' => $failed ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
