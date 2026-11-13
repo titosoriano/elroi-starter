@@ -37,6 +37,7 @@ A lean, hand-coded WordPress theme made to work with [ElRoi Site Editor](https:/
 - **Speed settings that keep the animations working:** Tools > Site Health > Speed settings sets LiteSpeed Cache safely in one click (cache on, minify on; JS delay, combine, unused-CSS and LiteSpeed lazy load off), keeps pages fresh in visitors' browsers, and reports Google Fonts added by plugins.
 - **Animations only where used:** with `'load' => 'auto'`, pages without effects load none of the motion libraries.
 - **One-command setup:** `wp es setup --name="Acme Roofing" --services="Roofing, Siding"` turns a fresh WordPress into a ready ElRoi site in about a minute: plugins, pages with templates, service area pages, menu, settings, sample content removed. Safe to run again.
+- **Move the client's old site in:** `bin/scrape-site.py` copies an existing site (pages in reading order, SEO titles, FAQs, blog posts, photos as WebP) into a folder; you check the page plan in `map.csv`, and `wp es import` fills the new site's page forms, posts, SEO fields and 301 redirects. Safe to run again.
 - **Security built in:** login names hidden from visitors, XML-RPC off, browser security headers, and a written setup for Cloudflare plus Kadence Security (one firewall, two-factor, no hidden login URL).
 - **Forms that keep the CRM clean:** phone numbers are checked as they are typed and again on the server, and the form links the privacy policy.
 - **Team photos that fit on phones:** a hero option shows the whole photo above the heading on small screens instead of cropping it behind the text.

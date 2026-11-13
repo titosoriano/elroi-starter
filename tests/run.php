@@ -695,5 +695,83 @@ foreach ( array( $su_town, get_page_by_path( 'service-areas/test-county' ), get_
 	}
 }
 
+// Old-site import (wp es import / es_import): a small export folder like bin/scrape-site.py writes.
+$im_dir = trailingslashit( get_temp_dir() ) . 'es-import-test-' . wp_generate_password( 6, false );
+wp_mkdir_p( $im_dir . '/images' );
+$im_png = imagecreatetruecolor( 400, 300 );
+imagejpeg( $im_png, $im_dir . '/images/team-abc123.jpg' );
+$im_src = 'https://old.example.com/wp-content/uploads/team.jpg';
+file_put_contents( $im_dir . '/images/images.json', wp_json_encode( array( $im_src => array( 'file' => 'team-abc123.jpg', 'alt' => 'Our team at a job site', 'width' => 400, 'height' => 300 ) ) ) );
+file_put_contents(
+	$im_dir . '/site.json',
+	wp_json_encode(
+		array(
+			'source'     => 'https://old.example.com/',
+			'pages'      => array(
+				array(
+					'path'            => '/deck-building/',
+					'h1'              => 'Deck Building in Morristown',
+					'eyebrow'         => 'Decks',
+					'lede'            => 'We design and build decks that last, with permits handled for you.',
+					'intro'           => array( 'We design and build decks that last, with permits handled for you.' ),
+					'hero_photo'      => $im_src,
+					'images'          => array( array( 'src' => $im_src, 'alt' => 'Our team at a job site' ) ),
+					'seo_title'       => 'Deck Building in Morristown | Old Co',
+					'seo_description' => 'Custom decks in Morristown, built by a licensed local team. Free estimates and clear written scopes.',
+					'sections'        => array(
+						array( 'heading' => 'Materials we use', 'paragraphs' => array( 'Pressure-treated lumber and composite boards.' ), 'bullets' => array( 'Composite', 'Cedar' ), 'cards' => array( array( 'heading' => 'Composite', 'paragraphs' => array( 'Low upkeep.' ) ) ) ),
+					),
+					'faqs'            => array( array( 'q' => 'Do decks need a permit?', 'a' => 'Most do; we check with the town.' ) ),
+				),
+			),
+			'posts'      => array(
+				array(
+					'url'             => 'https://old.example.com/2024/05/deck-care/',
+					'slug'            => 'deck-care-test',
+					'title'           => 'Deck care in spring',
+					'date'            => '2024-05-02T10:00:00',
+					'excerpt'         => 'How to clean and seal a deck.',
+					'categories'      => array( 'decks-test' ),
+					'featured'        => array( 'src' => $im_src, 'alt' => 'Our team at a job site' ),
+					'seo_title'       => 'Deck care | Old Co',
+					'seo_description' => 'Spring deck care in five steps.',
+					'blocks'          => array( "<!-- wp:paragraph -->\n<p>See <a href=\"https://old.example.com/deck-building/\">our decks</a>.</p>\n<!-- /wp:paragraph -->", array( 'img' => 0, 'caption' => 'A finished deck' ) ),
+					'images'          => array( array( 'src' => $im_src, 'alt' => 'Our team at a job site' ) ),
+				),
+			),
+			'categories' => array( array( 'slug' => 'decks-test', 'name' => 'Decks', 'description' => 'Deck guides.' ) ),
+		)
+	)
+);
+file_put_contents( $im_dir . '/map.csv', "old_path,kind,new_path,template,action,title,words\n/deck-building/,service,/services/decks/,templates/service.php,import,Deck Building,20\n" );
+$im_dry = es_import( $im_dir, array( 'dry_run' => true ) );
+$check( 'import: a dry run plans the page, the redirect and the post and changes nothing', ! is_wp_error( $im_dry ) && preg_grep( '#Create page "Deck Building" \(/services/decks/\)#', $im_dry['done'] ) && preg_grep( '#Redirect /deck-building/ to /services/decks/#', $im_dry['done'] ) && ! get_page_by_path( 'services/decks' ) && ! get_page_by_path( 'deck-care-test', OBJECT, 'post' ), $im_dry );
+$im_run  = es_import( $im_dir );
+$im_page = get_page_by_path( 'services/decks' );
+$im_c    = $im_page ? json_decode( (string) get_post_meta( $im_page->ID, '_elroi_content', true ), true ) : array();
+$check( 'import: the page gets its template and its form is filled (top, sections, cards, FAQs)', $im_page && 'templates/service.php' === get_page_template_slug( $im_page ) && 'Deck Building in Morristown' === ( $im_c['hero']['h1'] ?? '' ) && 'Decks' === ( $im_c['hero']['eyebrow'] ?? '' ) && 'Materials we use' === ( $im_c['sections'][0]['heading'] ?? '' ) && 'Composite' === ( $im_c['sections'][0]['cards'][0]['heading'] ?? '' ) && 'Do decks need a permit?' === ( $im_c['faqs'][0]['q'] ?? '' ), $im_c );
+$im_att = (int) ( $im_c['hero']['photo'] ?? 0 );
+$check( 'import: the photo is uploaded once with its alt text and source, and is the featured image', $im_att && 'Our team at a job site' === get_post_meta( $im_att, '_wp_attachment_image_alt', true ) && $im_src === get_post_meta( $im_att, '_es_source_url', true ) && get_post_thumbnail_id( $im_page ) === $im_att );
+$check( 'import: SEO title and description go to Rank Math, the description to the excerpt', 'Deck Building in Morristown | Old Co' === get_post_meta( $im_page->ID, 'rank_math_title', true ) && str_starts_with( get_post_field( 'post_excerpt', $im_page ), 'Custom decks' ) );
+$im_post = get_page_by_path( 'deck-care-test', OBJECT, 'post' );
+$check( 'import: the post keeps its date, category and excerpt; links to the old site become local; its photo is an image block', $im_post && '2024-05-02' === substr( $im_post->post_date, 0, 10 ) && has_category( 'decks-test', $im_post ) && 'How to clean and seal a deck.' === $im_post->post_excerpt && str_contains( $im_post->post_content, 'href="/deck-building/"' ) && str_contains( $im_post->post_content, '<!-- wp:image {"id":' . $im_att ) && str_contains( $im_post->post_content, 'A finished deck' ), $im_post ? $im_post->post_content : null );
+$check( 'import: the post reuses the uploaded photo (nothing uploaded twice)', 1 === count( get_posts( array( 'post_type' => 'attachment', 'post_status' => 'inherit', 'numberposts' => -1, 'fields' => 'ids', 'meta_key' => '_es_source_url', 'meta_value' => $im_src ) ) ) );
+$im_redir = wp_remote_get( home_url( '/deck-building/' ), array( 'redirection' => 0, 'timeout' => 20 ) );
+$check( 'import: the old address answers 301 to the new page', 301 === wp_remote_retrieve_response_code( $im_redir ) && str_ends_with( untrailingslashit( (string) wp_remote_retrieve_header( $im_redir, 'location' ) ), '/services/decks' ), array( wp_remote_retrieve_response_code( $im_redir ), wp_remote_retrieve_header( $im_redir, 'location' ) ) );
+$im_html = $render( get_permalink( $im_page ) );
+$check( 'import: the imported page renders with one h1 and no PHP errors', 1 === substr_count( $im_html, '<h1' ) && ! preg_match( '/(Fatal error|Warning:|Notice:)/', $im_html ) && str_contains( $im_html, 'Materials we use' ) );
+$im_again = es_import( $im_dir );
+$check( 'import: running it again changes nothing', ! $im_again['done'], $im_again['done'] );
+wp_delete_post( $im_post->ID, true );
+wp_delete_post( $im_page->ID, true );
+wp_delete_attachment( $im_att, true );
+delete_option( 'es_redirects' );
+$im_term = get_term_by( 'slug', 'decks-test', 'category' );
+if ( $im_term ) {
+	wp_delete_term( $im_term->term_id, 'category' );
+}
+array_map( 'wp_delete_file', glob( $im_dir . '/images/*' ) ?: array() );
+array_map( 'wp_delete_file', glob( $im_dir . '/*.*' ) ?: array() );
+
 $failed = array_values( array_filter( $results, fn( $r ) => ! $r['ok'] ) );
 echo wp_json_encode( array( 'passed' => count( $results ) - count( $failed ), 'failed' => count( $failed ), 'fails' => $failed ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
