@@ -120,6 +120,14 @@
 		});
 	});
 
+	// Lead form: mark the message as sent by a person once they start using the form (focus,
+	// typing or a tap). es_handle_lead() refuses messages without it; it replaces a WordPress nonce,
+	// which expired on cached pages.
+	document.querySelectorAll('[data-es-human]').forEach(function (field) {
+		var mark = function () { field.value = 'yes'; };
+		['focusin', 'input', 'pointerdown', 'keydown'].forEach(function (ev) { field.form.addEventListener(ev, mark, { once: true }); });
+	});
+
 	// Phone field: drop letters and other characters as they are typed (digits, spaces and
 	// + ( ) . - stay), then ask for 10 to 15 digits. es_valid_phone() checks the same on the server.
 	document.querySelectorAll('[data-es-phone]').forEach(function (input) {

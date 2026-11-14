@@ -120,7 +120,7 @@ wp_remote_post(
 	array(
 		'timeout'     => 20,
 		'redirection' => 0,
-		'body'        => array( 'action' => 'es_lead', 'es_nonce' => $lead_nonce, 'es_name' => 'Test Person', 'es_phone' => '(555) 010-0000', 'es_email' => 'test@example.com', 'es_service' => 'Service two', 'es_message' => 'Hello from the test.' ),
+		'body'        => array( 'action' => 'es_lead', 'es_human' => 'yes', 'es_name' => 'Test Person', 'es_phone' => '(555) 010-0000', 'es_email' => 'test@example.com', 'es_service' => 'Service two', 'es_message' => 'Hello from the test.' ),
 	)
 );
 $leads = get_posts( array( 'post_type' => 'es_lead', 'post_status' => 'private', 'numberposts' => 1 ) );
@@ -644,9 +644,13 @@ $ph_before = count( get_posts( array( 'post_type' => 'es_lead', 'post_status' =>
 wp_set_current_user( 0 );
 $ph_nonce = wp_create_nonce( 'es_lead' );
 wp_set_current_user( 1 );
-$ph_res = wp_remote_post( admin_url( 'admin-post.php' ), array( 'timeout' => 20, 'redirection' => 0, 'body' => array( 'action' => 'es_lead', 'es_nonce' => $ph_nonce, 'es_name' => 'Bad Phone', 'es_phone' => '123', 'es_email' => 'bad@example.com', 'es_message' => 'x' ) ) );
+$ph_res = wp_remote_post( admin_url( 'admin-post.php' ), array( 'timeout' => 20, 'redirection' => 0, 'body' => array( 'action' => 'es_lead', 'es_human' => 'yes', 'es_name' => 'Bad Phone', 'es_phone' => '123', 'es_email' => 'bad@example.com', 'es_message' => 'x' ) ) );
 $ph_after = count( get_posts( array( 'post_type' => 'es_lead', 'post_status' => 'private', 'numberposts' => -1, 'fields' => 'ids' ) ) );
 $check( 'form: a message with a bad phone number is sent back, not stored', $ph_before === $ph_after && str_contains( (string) wp_remote_retrieve_header( $ph_res, 'location' ), 'lead=phone' ), wp_remote_retrieve_header( $ph_res, 'location' ) );
+$bl_res = wp_remote_post( admin_url( 'admin-post.php' ), array( 'timeout' => 20, 'redirection' => 0, 'body' => array( 'action' => 'es_lead', 'es_name' => 'Script', 'es_phone' => '(555) 123-4567', 'es_email' => 'script@example.com' ) ) );
+$bl_after = count( get_posts( array( 'post_type' => 'es_lead', 'post_status' => 'private', 'numberposts' => -1, 'fields' => 'ids' ) ) );
+$check( 'form: a message posted without the person mark (a script) is refused and not stored', $bl_after === $ph_after && str_contains( (string) wp_remote_retrieve_header( $bl_res, 'location' ), 'lead=blocked' ), wp_remote_retrieve_header( $bl_res, 'location' ) );
+$check( 'form: the page carries no nonce or other value that expires (pages are cached for days)', ! str_contains( $render( home_url( '/contact/' ) ), 'es_nonce' ) && str_contains( $render( home_url( '/contact/' ) ), 'name="es_human" value="" data-es-human' ) );
 $pp_was  = (int) get_option( 'wp_page_for_privacy_policy' );
 $pp_page = wp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Privacy Policy', 'post_name' => 'privacy-policy-test' ) );
 update_option( 'wp_page_for_privacy_policy', $pp_page );

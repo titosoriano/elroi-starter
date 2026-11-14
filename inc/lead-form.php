@@ -61,8 +61,16 @@ function es_handle_lead() {
 		exit;
 	};
 
-	if ( ! isset( $_POST['es_nonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['es_nonce'] ) ), 'es_lead' ) ) {
-		$done( 'expired' );
+	// No WordPress nonce: page caches (LiteSpeed, Cloudflare, the host's CDN) serve pages for days,
+	// and a nonce printed in a page expires in 12 to 24 hours, so almost every visitor's message
+	// bounced as "expired" (Nuvista, 2026-11-14, the day after launch). site.js fills es_human when
+	// a person focuses, types or taps in the form; requests posted blindly leave it empty. A valid
+	// nonce from a page cached before this change is still accepted. Never put a nonce or anything
+	// else that expires in a public page.
+	$human = isset( $_POST['es_human'] ) && 'yes' === $_POST['es_human']; // phpcs:ignore WordPress.Security.NonceVerification
+	$nonce = isset( $_POST['es_nonce'] ) && wp_verify_nonce( sanitize_key( wp_unslash( $_POST['es_nonce'] ) ), 'es_lead' );
+	if ( ! $human && ! $nonce ) {
+		$done( 'blocked' );
 	}
 	if ( ! empty( $_POST['es_website'] ) ) { // Honeypot: people never fill it.
 		$done( 'sent' );
@@ -267,7 +275,8 @@ function es_lead_form( $title = '', $text = '' ) {
 		'sent'    => array( 'ok', sprintf( 'Thank you. Your message is in, and we reply within %s hours.', es_setting( 'response_hours' ) ) ),
 		'missing' => array( 'err', 'Please add your name, phone number and a valid email so we can reach you.' ),
 		'phone'   => array( 'err', 'Please check your phone number: use 10 digits, for example (555) 123-4567.' ),
-		'expired' => array( 'err', 'The form expired. Please send it again.' ),
+		'expired' => array( 'err', 'Please send the form again.' ),
+		'blocked' => array( 'err', 'We could not send the form. Please try again, or call us.' ),
 		'robot'   => array( 'err', 'We could not confirm you are not a robot. Please try again.' ),
 		'error'   => array( 'err', 'Something went wrong. Please call us instead.' ),
 	);
@@ -301,7 +310,7 @@ function es_lead_form( $title = '', $text = '' ) {
 			<p class="es-form__notice es-form__notice--<?php echo esc_attr( $notes[ $state ][0] ); ?>" role="<?php echo 'ok' === $notes[ $state ][0] ? 'status' : 'alert'; ?>" tabindex="-1" data-es-notice><?php echo esc_html( $notes[ $state ][1] ); ?></p>
 		<?php endif; ?>
 		<input type="hidden" name="action" value="es_lead">
-		<input type="hidden" name="es_nonce" value="<?php echo esc_attr( wp_create_nonce( 'es_lead' ) ); ?>">
+		<input type="hidden" name="es_human" value="" data-es-human>
 		<div class="es-form__hp" aria-hidden="true"><label for="es-website">Website</label><input type="text" id="es-website" name="es_website" tabindex="-1" autocomplete="off"></div>
 		<div class="es-form__row">
 			<p class="es-field"><label for="es-name">Full name <span aria-hidden="true">*</span></label><input type="text" id="es-name" name="es_name" autocomplete="name" required></p>
