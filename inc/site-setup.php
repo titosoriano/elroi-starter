@@ -9,8 +9,9 @@
  * - pages with their templates: Home (front page), Services hub, one Service page per service,
  *   About, Contact, Blog (posts page), and with --areas a Service Areas hub with its regions and
  *   towns (templates/area.php);
- * - Settings > Reading (home and posts page), permalinks /%postname%/, the timezone, comments and
- *   pingbacks off for new posts, the site title, and the company name in Site Settings;
+ * - Settings > Reading (home and posts page), permalinks /%postname%/, the timezone, comments,
+ *   pingbacks and trackbacks off (new posts, outgoing pingbacks, and every existing post, page and
+ *   attachment), the site title, and the company name in Site Settings;
  * - the Main menu (Services with each service under it, About, Blog, Contact; Service Areas with
  *   regions when there are areas) in both menu locations;
  * - WordPress's sample content removed while it is still untouched ("Hello world!", "Sample Page",
@@ -179,12 +180,21 @@ function es_site_setup( $o = array() ) {
 		$dry || update_option( 'timezone_string', $o['timezone'] );
 		$say( 'done', 'Set the timezone to ' . $o['timezone'] . '.' );
 	}
-	if ( 'closed' !== get_option( 'default_comment_status' ) || 'closed' !== get_option( 'default_ping_status' ) ) {
+	if ( 'closed' !== get_option( 'default_comment_status' ) || 'closed' !== get_option( 'default_ping_status' ) || '0' !== (string) get_option( 'default_pingback_flag' ) ) {
 		if ( ! $dry ) {
 			update_option( 'default_comment_status', 'closed' );
 			update_option( 'default_ping_status', 'closed' );
+			update_option( 'default_pingback_flag', '0' );
 		}
-		$say( 'done', 'Turned comments and pingbacks off for new posts.' );
+		$say( 'done', 'Turned comments, pingbacks and trackbacks off for new posts, and stopped sending pingbacks.' );
+	}
+	// Posts, pages and Media Library items that were created open (WordPress opens attachments).
+	global $wpdb;
+	$open = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE comment_status = 'open' OR ping_status = 'open'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	if ( $open && ! apply_filters( 'es_comments', false ) ) {
+		$dry || $wpdb->query( "UPDATE {$wpdb->posts} SET comment_status = 'closed', ping_status = 'closed' WHERE comment_status = 'open' OR ping_status = 'open'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$dry || wp_cache_flush();
+		$say( 'done', "Closed comments and pings on $open existing posts, pages and attachments." );
 	}
 	if ( ! $o['index'] && '1' === (string) get_option( 'blog_public' ) ) {
 		$dry || update_option( 'blog_public', '0' );

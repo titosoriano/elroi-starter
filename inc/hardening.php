@@ -10,6 +10,10 @@
  *   server's IP skips it. Nothing ElRoi installs uses XML-RPC (the plugin, the MCP and CRMs use the
  *   REST API). A site that needs it (Jetpack) turns it back on with
  *   add_filter( 'es_xmlrpc', '__return_true' ).
+ * - Comments, pingbacks and trackbacks are off everywhere (learned on The Stream Church, 2026-11):
+ *   WordPress leaves them open on every page and on every photo in the Media Library, and keeps
+ *   sending pingbacks to every site a page links to. ElRoi sites never show comments. A site that
+ *   wants them turns them back on with add_filter( 'es_comments', '__return_true' ).
  * - Browser security headers on every front-end page (`es_security_headers` filter: change or
  *   remove one, e.g. drop X-Frame-Options when another site must frame this one). HSTS is not
  *   sent here: add it at the host or Cloudflare once the final domain is live.
@@ -73,6 +77,20 @@ add_filter(
 			unset( $headers['X-Pingback'] );
 		}
 		return $headers;
+	}
+);
+
+// Comments and pings closed on every post, page and attachment, whatever each one's own setting
+// says; no pingbacks sent to the sites a page links to.
+add_filter( 'comments_open', fn( $open ) => apply_filters( 'es_comments', false ) ? $open : false, 20 );
+add_filter( 'pings_open', fn( $open ) => apply_filters( 'es_comments', false ) ? $open : false, 20 );
+add_filter( 'pre_option_default_pingback_flag', fn( $v ) => apply_filters( 'es_comments', false ) ? $v : '0' );
+add_action(
+	'pre_ping',
+	function ( &$links ) {
+		if ( ! apply_filters( 'es_comments', false ) ) {
+			$links = array();
+		}
 	}
 );
 

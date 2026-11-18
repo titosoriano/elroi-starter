@@ -636,6 +636,17 @@ $check( 'hardening: es_xmlrpc turns XML-RPC back on for a site that needs it', a
 remove_filter( 'es_xmlrpc', '__return_true' );
 $hd_head = wp_remote_retrieve_headers( wp_remote_get( home_url( '/' ), array( 'timeout' => 20 ) ) );
 $check( 'hardening: pages send nosniff, SAMEORIGIN framing and a referrer policy', 'nosniff' === ( $hd_head['x-content-type-options'] ?? '' ) && 'SAMEORIGIN' === ( $hd_head['x-frame-options'] ?? '' ) && '' !== ( $hd_head['referrer-policy'] ?? '' ), (array) $hd_head );
+$hd_page = get_posts( array( 'post_type' => 'page', 'numberposts' => 1, 'fields' => 'ids' ) )[0] ?? 0;
+$check( 'hardening: comments, pings and outgoing pingbacks are off on every post', $hd_page && ! comments_open( $hd_page ) && ! pings_open( $hd_page ) && '0' === (string) get_option( 'default_pingback_flag' ) );
+add_filter( 'es_comments', '__return_true' );
+global $wpdb;
+$hd_before = get_post_field( 'comment_status', $hd_page );
+$wpdb->update( $wpdb->posts, array( 'comment_status' => 'open' ), array( 'ID' => $hd_page ) );
+clean_post_cache( $hd_page );
+$check( 'hardening: es_comments turns them back on for a site that wants them', comments_open( $hd_page ) );
+$wpdb->update( $wpdb->posts, array( 'comment_status' => $hd_before ), array( 'ID' => $hd_page ) );
+clean_post_cache( $hd_page );
+remove_filter( 'es_comments', '__return_true' );
 $check( 'hardening: oEmbed names the business, not the account', get_bloginfo( 'name' ) === ( apply_filters( 'oembed_response_data', array( 'author_name' => 'admin', 'author_url' => 'x' ), get_post( 1 ), 600, 400 )['author_name'] ?? '' ) );
 
 // Lead form: phone numbers are checked; the fine print links the privacy policy.
